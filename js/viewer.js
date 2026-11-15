@@ -57,7 +57,7 @@
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.globalAlpha = 1; ctx.fillStyle = this.bg; ctx.fillRect(0, 0, W, H);
-      if (!this.drag) this.az += this.spin;
+      if (!this.drag && !Viewer.paused) this.az += this.spin * Viewer.speed;
 
       const ca = Math.cos(this.az), sa = Math.sin(this.az), ce = Math.cos(this.el), se = Math.sin(this.el);
       const cx = W / 2, cy = H / 2, S = Math.min(W, H) * this.fill * this.zoom;
@@ -102,5 +102,7 @@
     requestAnimationFrame(loop);
   }
 
+  Viewer.speed = 1;     // multiplicador global de giro
+  Viewer.paused = false;
   root.Viewer = Viewer;
 })(window);

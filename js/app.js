@@ -5,8 +5,19 @@
   const $ = (id) => document.getElementById(id);
   const ROOT = [1, 2, 2, 3, 3, 4, 4]; // tamaño del periodo = 2 × ROOT²
 
-  const state = { k: 0, scale: "didactic", highlight: true, slice: true, visible: new Set(), orbital: null };
-  const mainV = new Viewer($("main"), { fill: 0.38 });
+  const state = { k: 0, view: "cloud", scale: "didactic", highlight: true, slice: true, qty: "P", contours: true, visible: new Set(), orbital: null };
+  const mainV = new Viewer($("main"), { fill: 0.38, spin: 0.0012 });
+
+  // márgenes libres para las gráficas (debajo del texto de info y arriba del panel)
+  const margins = (H) => ({ top: Math.min(H * 0.35, $("info").offsetHeight + 22), bottom: $("panel").offsetHeight + 24 });
+  const fieldV = new FieldView($("field"), (W, H) => {
+    const m = margins(H), size = Math.max(120, Math.min(W - 150, H - m.top - m.bottom));
+    return { x: (W - size) / 2 - 30, y: m.top + (H - m.top - m.bottom - size) / 2, size };
+  });
+  const radialP = new RadialPlot($("radial"), (W, H) => {
+    const m = margins(H);
+    return { x: 60, y: m.top + 10, w: W - 90, h: Math.max(100, H - m.top - m.bottom - 40) };
+  });
 
   // ---------- Pestañas ----------
   function renderTabs() {
@@ -26,7 +37,7 @@
   function renderLayers() {
     const g = A.NOBLES[state.k], conf = A.nobleConfig(state.k);
     $("layers").innerHTML = conf.map((s) => {
-      const z = state.scale === "real" ? ` <small>Z<sub>ef</sub>=${A.zeff(g.Z, conf, s).toFixed(1)}</small>` : "";
+      const z = state.scale === "real" || state.view !== "cloud" ? ` <small>Z<sub>ef</sub>=${A.zeff(g.Z, conf, s).toFixed(1)}</small>` : "";
       return `<label style="border-color:${A.LCOLOR[s.l]}"><input type="checkbox" data-lab="${s.lab}" ${state.visible.has(s.lab) ? "checked" : ""}> ${s.lab}${A.sup(s.cap)}${z}</label>`;
     }).join("");
   }
@@ -48,7 +59,29 @@
   });
   $("optSlice").addEventListener("change", (e) => { state.slice = e.target.checked; renderMain(); });
   $("optNew").addEventListener("change", (e) => { state.highlight = e.target.checked; renderMain(); });
-  $("optReal").addEventListener("change", (e) => { state.scale = e.target.checked ? "real" : "didactic"; renderLayers(); renderMain(); });
+  $("optQty").addEventListener("change", (e) => { state.qty = e.target.value; renderMain(); });
+  $("optContour").addEventListener("change", (e) => { state.contours = e.target.checked; renderMain(); });
+
+  // ---------- Barra de herramientas ----------
+  function segOn(id, attr, val) {
+    document.querySelectorAll(`#${id} button`).forEach((b) => b.classList.toggle("on", b.dataset[attr] === val));
+  }
+  $("segView").addEventListener("click", (e) => {
+    const v = e.target.closest("button")?.dataset.v;
+    if (!v) return;
+    state.view = v; $("stage").dataset.view = v; segOn("segView", "v", v);
+    renderLayers(); renderMain();
+  });
+  $("segScale").addEventListener("click", (e) => {
+    const s = e.target.closest("button")?.dataset.s;
+    if (!s) return;
+    state.scale = s; segOn("segScale", "s", s);
+    renderLayers(); renderMain();
+  });
+  $("spin").addEventListener("input", (e) => { Viewer.speed = +e.target.value; });
+  $("pause").addEventListener("click", () => {
+    Viewer.paused = !Viewer.paused; $("pause").textContent = Viewer.paused ? "▶" : "⏸";
+  });
 
   // ---------- Visor principal ----------
   function renderMain() {
@@ -58,17 +91,80 @@
     document.querySelectorAll(".mini").forEach((m) => {
       m.classList.toggle("on", !!o && +m.dataset.n === o.n && +m.dataset.l === o.l && +m.dataset.i === o.i);
     });
+
+    // Toggle de visibilidad entre canvas según la vista activa
+    $("main").hidden = state.view !== "cloud";
+    $("field").hidden = state.view !== "field";
+    $("radial").hidden = state.view !== "radial";
+
     if (o) {
-      mainV.slice = 0;
-      mainV.setCloud(A.genOrbital(o.n, o.l, o.i, 30000));
+      if (state.view === "cloud") {
+        mainV.slice = 0;
+        mainV.setCloud(A.genOrbital(o.n, o.l, o.i, 30000));
+      } else if (state.view === "field") {
+        const pl = A.bestPlane(o.l, o.i);
+        const rad = A.radial(o.n, o.l);
+        fieldV.show({
+          key: `orb_${o.n}_${o.l}_${o.i}`,
+          type: "orbital",
+          n: o.n, l: o.l, i: o.i,
+          plane: pl,
+          E: rad.r99 * 1.1,
+          contours: state.contours
+        });
+      } else if (state.view === "radial") {
+        const rad = A.radial(o.n, o.l);
+        radialP.show({
+          curves: [{
+            label: `${o.n}${A.LCH[o.l]}`,
+            color: A.LCOLOR[o.l],
+            dim: false,
+            P: A.orbitalP(o.n, o.l)
+          }],
+          E: rad.r99 * 1.05,
+          mapping: "linear",
+          total: false
+        });
+      }
+
       $("info").innerHTML = `<div class="big">${o.n}${A.ANGNAME[o.l][o.i]}</div>
         n = ${o.n} (capa) · l = ${o.l} (tipo ${A.LCH[o.l]}) · uno de ${2 * o.l + 1} orbitales ${o.n}${A.LCH[o.l]} · cabe(n) 2 e⁻<br>
         Nodos radiales (cáscaras vacías): <b>${o.n - o.l - 1}</b> · Superficies nodales angulares: <b>${o.l}</b><br>
         <span class="legend"><i style="background:#4dabf7"></i>fase + <i style="background:#ff922b"></i>fase −</span>`;
       return;
     }
-    mainV.slice = state.slice ? 0.06 : 0;
-    mainV.setCloud(A.genAtom(state.k, { scale: state.scale, visible: state.visible, highlightNew: state.highlight, points: state.slice ? 160000 : 40000 }));
+
+    if (state.view === "cloud") {
+      mainV.slice = state.slice ? 0.06 : 0;
+      mainV.setCloud(A.genAtom(state.k, { scale: state.scale, visible: state.visible, highlightNew: state.highlight, points: state.slice ? 160000 : 40000 }));
+    } else if (state.view === "field") {
+      const shells = A.atomShells(state.k, state.visible);
+      const maxR = Math.max(...shells.map(s => s.rmax), 5);
+      fieldV.show({
+        key: `atom_${state.k}_${state.scale}_${state.qty}_${Array.from(state.visible).join("-")}`,
+        type: "atom",
+        shells: shells,
+        qty: state.qty,
+        mapping: state.scale === "real" ? "linear" : "sqrt",
+        E: maxR * 1.05,
+        contours: state.contours
+      });
+    } else if (state.view === "radial") {
+      const shells = A.atomShells(state.k, state.visible);
+      const maxR = Math.max(...shells.map(s => s.rmax), 5);
+      radialP.show({
+        curves: shells.map(s => ({
+          label: s.s.lab,
+          color: A.LCOLOR[s.s.l],
+          dim: state.highlight && s.core,
+          P: s.P
+        })),
+        E: maxR * 1.05,
+        mapping: state.scale === "real" ? "linear" : "sqrt",
+        total: true
+      });
+    }
+
     const prev = state.k ? A.NOBLES[state.k - 1] : null;
     $("info").innerHTML = `<div class="big">${g.name} (${g.sym}) · Z = ${g.Z}</div>
       <div class="conf">${A.configString(state.k, true)}</div>

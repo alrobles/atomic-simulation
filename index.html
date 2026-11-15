@@ -13,25 +13,52 @@
 </header>
 
 <main>
-  <section id="stage">
-    <canvas id="main"></canvas>
-    <div id="info"></div>
-    <button id="back" hidden>← volver al átomo</button>
-    <div id="panel">
-      <div class="opts">
-        <label><input type="checkbox" id="optSlice" checked> corte (ver capas)</label>
-        <label><input type="checkbox" id="optNew" checked> resaltar lo nuevo</label>
-        <label><input type="checkbox" id="optReal"> escala real (Slater)</label>
+  <section id="stage" data-view="cloud">
+    <div id="toolbar">
+      <div class="seg" id="segView">
+        <button data-v="cloud" class="on">☁ Nube 3D</button>
+        <button data-v="field">▦ Campo de densidad</button>
+        <button data-v="radial">📈 Distribución radial</button>
       </div>
-      <div class="lhead">Capas (quita capas para "pelar la cebolla"):</div>
-      <div id="layers"></div>
-      <div class="lbtns">
-        <button data-show="all">todas</button>
-        <button data-show="new">solo lo nuevo</button>
-        <button data-show="core">solo el carozo</button>
+      <div class="seg" id="segScale" title="Didáctica: capas separadas y comprimidas para ver todas. Real: tamaños calculados (reglas de Slater).">
+        <span class="seglab">Escala</span>
+        <button data-s="didactic" class="on">Didáctica</button>
+        <button data-s="real">Real</button>
+      </div>
+      <div class="spin only-cloud">
+        <span class="seglab">Giro</span>
+        <input type="range" id="spin" min="0" max="3" step="0.1" value="1">
+        <button id="pause" title="pausar / reanudar">⏸</button>
       </div>
     </div>
-    <div id="hint">arrastra para girar · rueda para zoom</div>
+    <div id="view">
+      <canvas id="main"></canvas>
+      <canvas id="field" hidden></canvas>
+      <canvas id="radial" hidden></canvas>
+      <div id="info"></div>
+      <button id="back" hidden>← volver al átomo</button>
+      <div id="panel">
+        <div class="opts">
+          <label class="only-cloud"><input type="checkbox" id="optSlice" checked> corte (ver capas)</label>
+          <label class="only-cloud only-radial"><input type="checkbox" id="optNew" checked> resaltar lo nuevo</label>
+          <label class="only-field">mostrar
+            <select id="optQty">
+              <option value="P">densidad radial 4πr²ρ (capas)</option>
+              <option value="rho">densidad ρ (escala log)</option>
+            </select>
+          </label>
+          <label class="only-field"><input type="checkbox" id="optContour" checked> contornos</label>
+        </div>
+        <div class="lhead">Capas (quita capas para "pelar la cebolla"):</div>
+        <div id="layers"></div>
+        <div class="lbtns">
+          <button data-show="all">todas</button>
+          <button data-show="new">solo lo nuevo</button>
+          <button data-show="core">solo el carozo</button>
+        </div>
+      </div>
+      <div id="hint"></div>
+    </div>
   </section>
 
   <aside id="side">
@@ -50,6 +77,7 @@
 
 <script src="js/physics.js"></script>
 <script src="js/viewer.js"></script>
+<script src="js/field.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

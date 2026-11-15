@@ -127,7 +127,8 @@
       cdf[k] /= acc;
       if (cdf[k] > 0.99 && r99 === rmax) r99 = rs[k];
     }
-    return (radCache[key] = { rs, cdf, sg, dr, r99 });
+    // norm2: factor para que ∫ r² (norm2·Rnl²) dr = 1
+    return (radCache[key] = { rs, cdf, sg, dr, r99, norm2: 1 / (acc * dr) });
   }
   function sampleR(rad) {
     const u = Math.random();
@@ -220,6 +221,55 @@
   }
 
   const sup = (s) => String(s).split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("");
+
+  // ---------- Densidades (campo y distribución radial) ----------
+  /**
+   * Subcapas del gas noble k con su densidad, usando orbitales hidrogenoides con Z_ef (Slater).
+   * P(r) = 4πr²ρ(r): electrones por unidad de radio (∫P dr = electrones de la subcapa).
+   * Una subcapa llena es esféricamente simétrica (teorema de Unsöld), así que ρ solo depende de r.
+   */
+  function atomShells(k, visible) {
+    const Z = NOBLES[k].Z, config = nobleConfig(k);
+    return config
+      .filter((s) => !visible || visible.has(s.lab))
+      .map((s) => {
+        const z = zeff(Z, config, s), rad = radial(s.n, s.l), c = s.cap * z * z * z * rad.norm2;
+        return {
+          s, z, core: s.period < k, rmax: rad.r99 / z,
+          P: (r) => { const R = Rnl(s.n, s.l, z * r); return c * r * r * R * R; },
+          rho: (r) => { const R = Rnl(s.n, s.l, z * r); return (c * R * R) / (4 * Math.PI); },
+        };
+      });
+  }
+
+  /** ψ (sin normalizar) de un orbital del hidrógeno en el punto (x,y,z). */
+  function psi(n, l, i, x, y, z) {
+    const r = Math.sqrt(x * x + y * y + z * z);
+    if (r < 1e-12) return l === 0 ? Rnl(n, 0, 0) : 0;
+    return Rnl(n, l, r) * ANG[l][i](x / r, y / r, z / r);
+  }
+
+  /** P(r) normalizada de un solo orbital del hidrógeno. */
+  function orbitalP(n, l) {
+    const rad = radial(n, l);
+    return (r) => { const R = Rnl(n, l, r); return rad.norm2 * r * r * R * R; };
+  }
+
+  /** Plano (xz, xy, yz) donde el orbital se ve mejor: el que contiene más |Y|². */
+  function bestPlane(l, i) {
+    const f = ANG[l][i], planes = { xz: [], xy: [], yz: [] };
+    let best = "xz", bv = -1;
+    for (const p in planes) {
+      let s = 0;
+      for (let k = 0; k < 360; k++) {
+        const a = (k / 360) * 2 * Math.PI, c = Math.cos(a), d = Math.sin(a);
+        const v = p === "xz" ? f(c, 0, d) : p === "xy" ? f(c, d, 0) : f(0, c, d);
+        s += v * v;
+      }
+      if (s > bv + 1e-9) { bv = s; best = p; }
+    }
+    return best;
+  }
   function configString(k, short) {
     const conf = nobleConfig(k);
     if (short && k > 0) {
@@ -232,6 +282,7 @@
     LCH, LCOLOR, PERIODS, NOBLES, ANG, ANGNAME,
     subshell, nobleConfig, configString, zeff, radial, Rnl, laguerre,
     sampleDir, sampleR, genOrbital, genAtom, sup,
+    atomShells, psi, orbitalP, bestPlane,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = Atom;
   else root.Atom = Atom;
