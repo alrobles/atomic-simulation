@@ -2,82 +2,230 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbitales de los gases nobles</title>
-<link rel="stylesheet" href="css/style.css">
+<title>Orbitales y gases nobles</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,sans-serif;background:#0d1117;color:#e6edf3;display:flex;height:100vh;overflow:hidden}
+  #left{flex:1.1;position:relative;min-width:0}
+  #cv{width:100%;height:100%;display:block;cursor:grab}
+  #info{position:absolute;top:12px;left:14px;right:14px;pointer-events:none;font-size:15px;line-height:1.45;text-shadow:0 0 4px #000}
+  #info .big{font-size:22px;font-weight:700}
+  #modes{position:absolute;bottom:14px;left:14px;display:flex;gap:6px}
+  #hint{position:absolute;bottom:18px;right:14px;font-size:12px;color:#8b949e}
+  button{background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 11px;font-size:14px;cursor:pointer}
+  button:hover{background:#30363d}
+  button.on{background:#1f6feb;border-color:#1f6feb}
+  #right{flex:1;overflow-y:auto;padding:14px 18px;border-left:1px solid #30363d;min-width:470px}
+  h1{font-size:20px;margin:0 0 8px}
+  #elem{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  #sym{font-size:44px;font-weight:800;width:86px;height:86px;border:2px solid #30363d;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+  #sym small{font-size:13px;font-weight:400;color:#8b949e}
+  #sym.noble{border-color:#f0c000;box-shadow:0 0 18px #f0c00088}
+  #conf{font-size:16px}
+  #conf .core{color:#8b949e;font-size:14px}
+  #badge{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;background:#f0c000;color:#000;font-weight:700;font-size:13px}
+  .ctrl{display:flex;gap:6px;align-items:center;margin:8px 0 12px;flex-wrap:wrap}
+  input[type=range]{flex:1;min-width:150px}
+  .row{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:5px;border:1px solid #21262d;border-radius:8px;transition:all .3s}
+  .row.active{border-color:#1f6feb}
+  .row.full{background:#f0c00014;border-color:#f0c00066}
+  .plabel{width:62px;font-size:12px;color:#8b949e}
+  .subs{flex:1;display:flex;gap:8px;flex-wrap:wrap}
+  .sub{border-left:3px solid;padding-left:5px}
+  .sub.l0{border-color:#ff6b6b}.sub.l1{border-color:#ffd43b}.sub.l2{border-color:#4dabf7}.sub.l3{border-color:#69db7c}
+  .slab{font-size:12px;font-weight:700}
+  .slab span{font-weight:400;color:#8b949e;margin-left:4px}
+  .boxes{display:flex;gap:2px;margin-top:2px}
+  .box{width:21px;height:21px;border:1px solid #484f58;border-radius:3px;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;letter-spacing:-2px}
+  .box:hover{border-color:#e6edf3}
+  .box.sel{outline:2px solid #1f6feb}
+  .box.last{background:#1f6feb44}
+  .psum{width:118px;text-align:right;font-size:12px;color:#8b949e}
+  .psum b{color:#e6edf3;font-size:14px}
+  .ng{margin-top:2px;font-size:12px;color:#6e7681}
+  .ng.on{color:#f0c000;font-weight:700}
+  #seq{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:12px 0;font-size:14px}
+  #seq .n{padding:3px 8px;border-radius:6px;border:1px solid #30363d}
+  #seq .n.on{background:#f0c000;color:#000;font-weight:700}
+  #seq .d{color:#8b949e;font-size:11px}
+  .exp{font-size:14px;line-height:1.5;color:#c9d1d9}
+  .exp b{color:#fff}
+  .legend span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 3px 0 10px}
+</style>
 </head>
 <body>
-<header>
-  <h1>Los orbitales de los gases nobles <span>¿por qué 2, 10, 18, 36, 54, 86, 118?</span></h1>
-  <nav id="tabs"></nav>
-</header>
+<div id="left">
+  <canvas id="cv"></canvas>
+  <div id="info"></div>
+  <div id="modes">
+    <button id="mOrb" class="on">Un orbital</button>
+    <button id="mAtom">Átomo completo</button>
+  </div>
+  <div id="hint">Arrastra para girar · rueda para zoom</div>
+</div>
 
-<main>
-  <section id="stage" data-view="cloud">
-    <div id="toolbar">
-      <div class="seg" id="segView">
-        <button data-v="cloud" class="on">☁ Nube 3D</button>
-        <button data-v="field">▦ Campo de densidad</button>
-        <button data-v="radial">📈 Distribución radial</button>
-      </div>
-      <div class="seg" id="segScale" title="Didáctica: capas separadas y comprimidas para ver todas. Real: tamaños calculados (reglas de Slater).">
-        <span class="seglab">Escala</span>
-        <button data-s="didactic" class="on">Didáctica</button>
-        <button data-s="real">Real</button>
-      </div>
-      <div class="spin only-cloud">
-        <span class="seglab">Giro</span>
-        <input type="range" id="spin" min="0" max="3" step="0.1" value="1">
-        <button id="pause" title="pausar / reanudar">⏸</button>
-      </div>
-    </div>
-    <div id="view">
-      <canvas id="main"></canvas>
-      <canvas id="field" hidden></canvas>
-      <canvas id="radial" hidden></canvas>
-      <div id="info"></div>
-      <button id="back" hidden>← volver al átomo</button>
-      <div id="panel">
-        <div class="opts">
-          <label class="only-cloud"><input type="checkbox" id="optSlice" checked> corte (ver capas)</label>
-          <label class="only-cloud only-radial"><input type="checkbox" id="optNew" checked> resaltar lo nuevo</label>
-          <label class="only-field">mostrar
-            <select id="optQty">
-              <option value="P">densidad radial 4πr²ρ (capas)</option>
-              <option value="rho">densidad ρ (escala log)</option>
-            </select>
-          </label>
-          <label class="only-field"><input type="checkbox" id="optContour" checked> contornos</label>
-        </div>
-        <div class="lhead">Capas (quita capas para "pelar la cebolla"):</div>
-        <div id="layers"></div>
-        <div class="lbtns">
-          <button data-show="all">todas</button>
-          <button data-show="new">solo lo nuevo</button>
-          <button data-show="core">solo el carozo</button>
-        </div>
-      </div>
-      <div id="hint"></div>
-    </div>
-  </section>
+<div id="right">
+  <h1>¿De dónde salen 2, 10, 18, 36, 54, 86, 118?</h1>
+  <div id="elem">
+    <div id="sym">H<small>Z=1</small></div>
+    <div><div id="conf"></div><div id="badgeBox"></div></div>
+  </div>
+  <div class="ctrl">
+    <button id="bPrev">−1 e⁻</button>
+    <button id="bNext">+1 e⁻</button>
+    <button id="bNoble">⏭ siguiente gas noble</button>
+    <button id="bPlay">▶ animar</button>
+    <input type="range" id="slider" min="0" max="118" value="1">
+  </div>
 
-  <aside id="side">
-    <section id="newcard"></section>
-    <section id="pattern"></section>
-    <section class="explain">
-      <h2>Las reglas</h2>
-      <p><b>1. Cada tipo de orbital tiene un número fijo de orientaciones:</b> s = 1, p = 3, d = 5, f = 7, es decir, los impares 1, 3, 5, 7. En cada orbital caben <b>2 electrones</b>. Por eso los cupos son 2, 6, 10 y 14.</p>
-      <p><b>2. Se llenan de menor a mayor energía.</b> Los orbitales más alejados del núcleo o con formas más complicadas cuestan más energía. Por eso el 4s va <i>antes</i> que el 3d, y el 6s antes que el 4f. La regla es: menor <i>n + l</i> primero.</p>
-      <p><b>3. Después de cada p hay un salto grande de energía.</b> El siguiente electrón tendría que irse a una capa nueva, mucho más lejana. Un átomo con su último p completo es muy estable y no reacciona: es un <b>gas noble</b>.</p>
-      <p><b>4. El patrón:</b> 1 = 1², 1+3 = 2², 1+3+5 = 3², 1+3+5+7 = 4². Si se multiplican por 2 electrones, salen los periodos 2, 8, 18 y 32. Cada uno aparece dos veces (excepto el primero), porque los orbitales d y f entran "con retraso" un periodo después.</p>
-      <p class="note">Las formas de los orbitales individuales son las soluciones exactas del átomo de hidrógeno. En el átomo completo, la escala didáctica pone cada capa <i>n</i> en su propio anillo, y por eso se ve que el 3d pertenece a la capa 3 aunque se llene en el periodo 4. En "escala real" el tamaño se calcula con la carga nuclear efectiva (reglas de Slater): las capas internas se encogen muchísimo. En el oganesón (118) los efectos relativistas cambian este cuadro; aquí no se incluyen.</p>
-    </section>
-  </aside>
-</main>
+  <div id="table"></div>
 
-<script src="js/physics.js"></script>
-<script src="js/viewer.js"></script>
-<script src="js/field.js"></script>
-<script src="js/app.js"></script>
+  <div id="seq"></div>
+
+  <div class="exp">
+    <p><b>1. Cada tipo de orbital tiene su número de "cajitas":</b> s = 1, p = 3, d = 5, f = 7 (siempre impares: 1, 3, 5, 7). En cada cajita caben <b>2 electrones</b> (↑↓), así que los cupos son s = 2, p = 6, d = 10, f = 14.</p>
+    <p><b>2. Se llenan en un orden fijo, de menor a mayor energía.</b> Los orbitales que se alejan más del núcleo (con <i>n</i> grande) o que tienen formas más complicadas (con <i>l</i> grande) cuestan más energía. Por eso el 4s se llena <i>antes</i> que el 3d, y el 6s antes que el 4f. La regla es: menor <i>n + l</i> va primero.</p>
+    <p><b>3. Después de cada p viene un salto grande de energía.</b> El siguiente electrón tiene que irse a una capa nueva, más lejana. Por eso un átomo con su último p lleno es muy estable y "no quiere" ganar ni perder electrones: es un <b>gas noble</b>.</p>
+    <p><b>4. El patrón:</b> cada fila suma 2, 8, 8, 18, 18, 32, 32, que es 2×1, 2×4, 2×4, 2×9, 2×9, 2×16, 2×16. Son 2 por un cuadrado perfecto, y casi todos aparecen dos veces.</p>
+    <p style="color:#8b949e;font-size:12px">Notas: la izquierda muestra orbitales del hidrógeno (forma exacta). En "átomo completo" la escala radial está comprimida para que se vean todas las capas. Algunos elementos reales (Cr, Cu, La…) rompen ligeramente el orden de llenado; aquí se usa el orden ideal.</p>
+  </div>
+</div>
+
+<script>
+// ---------- Datos ----------
+const SYM="H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og".split(" ");
+const NOBLE={2:"Helio",10:"Neón",18:"Argón",36:"Kriptón",54:"Xenón",86:"Radón",118:"Oganesón"};
+const NOBLE_Z=[2,10,18,36,54,86,118];
+const PERIODS=[["1s"],["2s","2p"],["3s","3p"],["4s","3d","4p"],["5s","4d","5p"],["6s","4f","5d","6p"],["7s","5f","6d","7p"]];
+const LL={s:0,p:1,d:2,f:3}, LCH="spdf";
+const LCOL=["#ff6b6b","#ffd43b","#4dabf7","#69db7c"];
+const SUBS=[]; {let c=0; PERIODS.forEach((row,pi)=>row.forEach(lab=>{const n=+lab[0],l=LL[lab[1]],cap=2*(2*l+1);SUBS.push({lab,n,l,cap,start:c,period:pi});c+=cap;}));}
+const sup=s=>String(s).split("").map(c=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("");
+const eIn=(s,Z)=>Math.max(0,Math.min(s.cap,Z-s.start));
+function boxOcc(s,Z,i){const e=eIn(s,Z),nb=2*s.l+1;return (e>i?1:0)+(e>nb+i?1:0);}
+function lastOrb(Z){if(Z<1)return null;for(const s of SUBS)if(Z<=s.start+s.cap){const j=Z-s.start-1;return{n:s.n,l:s.l,i:j%(2*s.l+1)};}}
+
+// ---------- Armónicos esféricos reales (forma cartesiana) ----------
+const ANG=[
+ [()=>1],
+ [(x,y,z)=>x,(x,y,z)=>y,(x,y,z)=>z],
+ [(x,y,z)=>x*y,(x,y,z)=>y*z,(x,y,z)=>3*z*z-1,(x,y,z)=>x*z,(x,y,z)=>x*x-y*y],
+ [(x,y,z)=>y*(3*x*x-y*y),(x,y,z)=>x*y*z,(x,y,z)=>y*(5*z*z-1),(x,y,z)=>z*(5*z*z-3),(x,y,z)=>x*(5*z*z-1),(x,y,z)=>z*(x*x-y*y),(x,y,z)=>x*(x*x-3*y*y)]
+];
+const ANGNAME=[["s"],["pₓ","p_y","p_z"],["d_xy","d_yz","d_z²","d_xz","d_x²−y²"],["f_y(3x²−y²)","f_xyz","f_yz²","f_z³","f_xz²","f_z(x²−y²)","f_x(x²−3y²)"]];
+function randDir(){const z=2*Math.random()-1,p=2*Math.PI*Math.random(),s=Math.sqrt(1-z*z);return[s*Math.cos(p),s*Math.sin(p),z];}
+const ANGMAX=ANG.map(L=>L.map(f=>{let m=0;for(let k=0;k<20000;k++){const d=randDir();m=Math.max(m,Math.abs(f(...d)));}return m*1.02;}));
+function sampleDir(l,i){const f=ANG[l][i],M=ANGMAX[l][i];for(;;){const d=randDir(),v=f(...d);if(Math.random()*M*M<v*v)return[d,v>=0?1:-1];}}
+
+// ---------- Parte radial del hidrógeno ----------
+function lag(k,a,x){if(k===0)return 1;let L0=1,L1=1+a-x;for(let i=1;i<k;i++){const L2=((2*i+1+a-x)*L1-(i+a)*L0)/(i+1);L0=L1;L1=L2;}return L1;}
+function Rnl(n,l,r){const rho=2*r/n;return Math.pow(rho,l)*Math.exp(-rho/2)*lag(n-l-1,2*l+1,rho);}
+const radCache={};
+function radial(n,l){const key=n+","+l;if(radCache[key])return radCache[key];
+  const G=4000,rmax=3*n*n+12,dr=rmax/G,rs=new Float64Array(G),cdf=new Float64Array(G),sg=new Int8Array(G);let acc=0;
+  for(let k=0;k<G;k++){const r=(k+.5)*dr,R=Rnl(n,l,r);rs[k]=r;sg[k]=R>=0?1:-1;acc+=r*r*R*R;cdf[k]=acc;}
+  let r99=rmax;for(let k=0;k<G;k++){cdf[k]/=acc;if(cdf[k]>0.99&&r99===rmax)r99=rs[k];}
+  return radCache[key]={rs,cdf,sg,dr,r99};}
+function sampleR(rad){const u=Math.random();let lo=0,hi=rad.cdf.length-1;while(lo<hi){const m=(lo+hi)>>1;if(rad.cdf[m]<u)lo=m+1;else hi=m;}
+  return[rad.rs[lo]+(Math.random()-.5)*rad.dr,rad.sg[lo]];}
+
+// ---------- Generación de nubes de puntos ----------
+function makeGroup(color,alpha,N){return{color,alpha,x:new Float32Array(N),y:new Float32Array(N),z:new Float32Array(N),c:0};}
+function push(g,x,y,z){g.x[g.c]=x;g.y[g.c]=y;g.z[g.c]=z;g.c++;}
+function genOrbital(n,l,i){
+  const N=26000,rad=radial(n,l),pos=makeGroup("#4dabf7",.45,N),neg=makeGroup("#ff922b",.45,N),S=1/rad.r99;
+  for(let k=0;k<N;k++){const[r,sr]=sampleR(rad),[d,sa]=sampleDir(l,i);push(sr*sa>0?pos:neg,d[0]*r*S,d[1]*r*S,d[2]*r*S);}
+  return[pos,neg];}
+function genAtom(Z){
+  if(Z<1)return[];
+  const per=Math.max(160,Math.floor(36000/Z)),groups=LCOL.map(c=>makeGroup(c,.4,40000+per*4));
+  let maxR=0;SUBS.forEach(s=>{if(eIn(s,Z)>0)maxR=Math.max(maxR,radial(s.n,s.l).r99/s.n);});
+  SUBS.forEach(s=>{if(eIn(s,Z)===0)return;const rad=radial(s.n,s.l);
+    for(let i=0;i<2*s.l+1;i++){const occ=boxOcc(s,Z,i);for(let k=0;k<occ*per;k++){const[r]=sampleR(rad),[d]=sampleDir(s.l,i),rr=r/s.n/maxR;push(groups[s.l],d[0]*rr,d[1]*rr,d[2]*rr);}}});
+  return groups;}
+
+// ---------- Estado ----------
+let Z=1,mode="orbital",sel=null,cloud=[],cloudKey="",playing=false;
+const $=id=>document.getElementById(id);
+
+function currentOrb(){return sel||lastOrb(Z)||{n:1,l:0,i:0};}
+function update(){
+  $("slider").value=Z;
+  // elemento
+  const symEl=$("sym");symEl.innerHTML=(Z?SYM[Z-1]:"—")+`<small>Z=${Z}</small>`;symEl.classList.toggle("noble",!!NOBLE[Z]);
+  let core=0;for(const nz of NOBLE_Z)if(nz<Z)core=nz;
+  const full=SUBS.filter(s=>eIn(s,Z)>0).map(s=>s.lab+sup(eIn(s,Z))).join(" ");
+  const short=core?`[${SYM[core-1]}] `+SUBS.filter(s=>s.start>=core&&eIn(s,Z)>0).map(s=>s.lab+sup(eIn(s,Z))).join(" "):full;
+  $("conf").innerHTML=Z?`${short}<div class="core">${core?full:"&nbsp;"}</div>`:"(sin electrones)";
+  $("badgeBox").innerHTML=NOBLE[Z]?`<span id="badge">¡${NOBLE[Z]}! Gas noble: fila completa</span>`:"";
+  // tabla
+  const lo=lastOrb(Z),co=currentOrb();let h="";
+  PERIODS.forEach((row,pi)=>{
+    const subs=SUBS.filter(s=>s.period===pi),last=subs[subs.length-1],end=last.start+last.cap,tot=end-subs[0].start;
+    const isFull=Z>=end,act=Z>subs[0].start&&Z<end;
+    h+=`<div class="row ${isFull?"full":""} ${act?"active":""}"><div class="plabel">Periodo ${pi+1}</div><div class="subs">`;
+    subs.forEach(s=>{h+=`<div class="sub l${s.l}"><div class="slab">${s.lab}<span>${eIn(s,Z)}/${s.cap}</span></div><div class="boxes">`;
+      for(let i=0;i<2*s.l+1;i++){const o=boxOcc(s,Z,i),isSel=mode==="orbital"&&co.n===s.n&&co.l===s.l&&co.i===i,isLast=lo&&lo.n===s.n&&lo.l===s.l&&lo.i===i;
+        h+=`<div class="box ${isSel?"sel":""} ${isLast?"last":""}" data-n="${s.n}" data-l="${s.l}" data-i="${i}" title="${s.n}${ANGNAME[s.l][i]}">${o>0?"↑":""}${o>1?"↓":""}</div>`;}
+      h+=`</div></div>`;});
+    h+=`</div><div class="psum">${subs.map(s=>s.cap).join("+")} = <b>${tot}</b><div class="ng ${isFull?"on":""}">${NOBLE[end]} · ${end}</div></div></div>`;});
+  $("table").innerHTML=h;
+  // secuencia
+  let q="";NOBLE_Z.forEach((nz,k)=>{if(k)q+=`<span class="d">+${nz-NOBLE_Z[k-1]}→</span>`;q+=`<span class="n ${Z>=nz?"on":""}">${nz}</span>`;});
+  $("seq").innerHTML=q;
+  // nube
+  const key=mode==="orbital"?`o${co.n}${co.l}${co.i}`:`a${Z}`;
+  if(key!==cloudKey){cloudKey=key;cloud=mode==="orbital"?genOrbital(co.n,co.l,co.i):genAtom(Z);}
+  if(mode==="orbital"){const nr=co.n-co.l-1;
+    $("info").innerHTML=`<div class="big">${co.n}${ANGNAME[co.l][co.i]}</div>n = ${co.n} (capa) · l = ${co.l} (tipo ${LCH[co.l]}) · ${2*co.l+1} orientaciones posibles<br>
+      Nodos radiales (cáscaras vacías): <b>${nr}</b> · Superficies nodales angulares: <b>${co.l}</b><br>
+      <span class="legend"><span style="background:#4dabf7;margin-left:0"></span>fase + <span style="background:#ff922b"></span>fase −</span>
+      <span style="color:#8b949e"> · ${sel?"(seleccionado, haz clic en +1 para seguir)":"(orbital donde entró el último electrón)"}</span>`;}
+  else $("info").innerHTML=`<div class="big">${Z?SYM[Z-1]:"—"}: todas las capas ocupadas</div>
+      <span class="legend"><span style="background:${LCOL[0]};margin-left:0"></span>s <span style="background:${LCOL[1]}"></span>p <span style="background:${LCOL[2]}"></span>d <span style="background:${LCOL[3]}"></span>f</span>
+      <span style="color:#8b949e"> · escala radial comprimida (capa n a radio ∝ n)</span>`;
+}
+function setZ(z){Z=Math.max(0,Math.min(118,z));sel=null;update();}
+
+// ---------- Controles ----------
+$("bPrev").onclick=()=>setZ(Z-1);
+$("bNext").onclick=()=>setZ(Z+1);
+$("bNoble").onclick=()=>{const nz=NOBLE_Z.find(v=>v>Z);if(nz)setZ(nz);};
+$("slider").oninput=e=>setZ(+e.target.value);
+$("mOrb").onclick=()=>{mode="orbital";$("mOrb").classList.add("on");$("mAtom").classList.remove("on");update();};
+$("mAtom").onclick=()=>{mode="atom";sel=null;$("mAtom").classList.add("on");$("mOrb").classList.remove("on");update();};
+$("table").onclick=e=>{const b=e.target.closest(".box");if(!b)return;sel={n:+b.dataset.n,l:+b.dataset.l,i:+b.dataset.i};mode="orbital";$("mOrb").classList.add("on");$("mAtom").classList.remove("on");update();};
+$("bPlay").onclick=()=>{playing=!playing;$("bPlay").textContent=playing?"⏸ pausa":"▶ animar";if(playing){if(Z>=118)setZ(0);step();}};
+function step(){if(!playing)return;if(Z>=118){playing=false;$("bPlay").textContent="▶ animar";return;}setZ(Z+1);setTimeout(step,NOBLE[Z]?1600:mode==="atom"?260:420);}
+document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")setZ(Z+1);if(e.key==="ArrowLeft")setZ(Z-1);});
+
+// ---------- Render 3D (canvas 2D, sin librerías) ----------
+const cv=$("cv"),ctx=cv.getContext("2d");
+let az=0.6,el=0.35,zoom=1,drag=null;
+cv.onmousedown=e=>{drag=[e.clientX,e.clientY];cv.style.cursor="grabbing";};
+window.onmouseup=()=>{drag=null;cv.style.cursor="grab";};
+window.onmousemove=e=>{if(!drag)return;az+=(e.clientX-drag[0])*0.01;el=Math.max(-1.5,Math.min(1.5,el+(e.clientY-drag[1])*0.01));drag=[e.clientX,e.clientY];};
+cv.onwheel=e=>{e.preventDefault();zoom=Math.max(.3,Math.min(5,zoom*(e.deltaY<0?1.1:0.9)));};
+function draw(){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  if(cv.width!==W*dpr||cv.height!==H*dpr){cv.width=W*dpr;cv.height=H*dpr;}
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.fillStyle="#0d1117";ctx.fillRect(0,0,W,H);
+  if(!drag)az+=0.003;
+  const ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el),cx=W/2,cy=H/2+20,S=Math.min(W,H)*0.40*zoom;
+  const proj=(x,y,z)=>{const vx=x*ca-y*sa,d0=x*sa+y*ca,up=z*ce-d0*se,dep=z*se+d0*ce,p=1/(1+dep*0.25);return[cx+vx*S*p,cy-up*S*p];};
+  // ejes
+  ctx.strokeStyle="#30363d";ctx.fillStyle="#6e7681";ctx.font="13px sans-serif";ctx.lineWidth=1;
+  [[1,0,0,"x"],[0,1,0,"y"],[0,0,1,"z"]].forEach(([a,b,c,t])=>{const p1=proj(-a*1.1,-b*1.1,-c*1.1),p2=proj(a*1.1,b*1.1,c*1.1);ctx.beginPath();ctx.moveTo(...p1);ctx.lineTo(...p2);ctx.stroke();ctx.fillText(t,p2[0]+4,p2[1]);});
+  // núcleo
+  const n0=proj(0,0,0);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(n0[0],n0[1],2.5,0,7);ctx.fill();
+  // puntos
+  const sz=Math.max(1.2,1.6*Math.sqrt(zoom));
+  for(const g of cloud){ctx.fillStyle=g.color;ctx.globalAlpha=g.alpha;const X=g.x,Y=g.y,Zs=g.z;
+    for(let k=0;k<g.c;k++){const x=X[k],y=Y[k],z=Zs[k],vx=x*ca-y*sa,d0=x*sa+y*ca,up=z*ce-d0*se,dep=z*se+d0*ce,p=1/(1+dep*0.25);
+      ctx.fillRect(cx+vx*S*p,cy-up*S*p,sz,sz);}}
+  requestAnimationFrame(draw);
+}
+update();draw();
+</script>
 </body>
 </html>
