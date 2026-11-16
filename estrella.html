@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vida de una estrella — del hidrógeno al destino final</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:system-ui,"Segoe UI",sans-serif;background:#0d1117;color:#e6edf3;display:flex;flex-direction:column;overflow:hidden}
+  header{padding:10px 16px 8px;border-bottom:1px solid #30363d}
+  h1{font-size:20px;margin:0 0 8px}
+  h1 span{font-size:14px;font-weight:400;color:#8b949e;margin-left:8px}
+  .alt{margin:6px 0 0;font-size:12px}
+  .alt a{color:#58a6ff;text-decoration:none}
+  .alt a:hover{text-decoration:underline}
+  main{flex:1;min-height:0;display:flex;flex-direction:column}
+  #stage{flex:1.25;min-height:0;position:relative;border-bottom:1px solid #30363d;display:flex}
+  #star{flex:1;position:relative;min-width:0}
+  #starcv{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #starlab{position:absolute;left:14px;top:10px;font-size:13px;color:#8b949e;text-shadow:0 1px 3px #000;pointer-events:none}
+  #starlab b{color:#e6edf3}
+  #mid{flex:1;min-height:0;display:flex;flex-direction:column;border-left:1px solid #30363d}
+  #hrw{flex:1;min-height:0;position:relative}
+  #hrcv{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #hrlab{position:absolute;left:10px;top:8px;font-size:12px;color:#8b949e;pointer-events:none}
+  #tl{display:flex;gap:3px;padding:8px 10px;border-top:1px solid #30363d;overflow-x:auto}
+  .ph{flex:1;min-width:74px;padding:5px 6px;border-radius:6px;border:1px solid #30363d;background:#161b22;font-size:10.5px;line-height:1.25;cursor:pointer;color:#8b949e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ph b{display:block;color:#e6edf3;font-size:11px}
+  .ph.on{border-color:#f0c000;background:#2d2405;color:#e6edf3}
+  .ph.on b{color:#f0c000}
+  #side{width:360px;min-width:300px;overflow-y:auto;padding:12px 16px;border-left:1px solid #30363d;font-size:14px;line-height:1.5}
+  #side h2{font-size:15px;margin:14px 0 6px;color:#f0c000}
+  #side h2:first-child{margin-top:0}
+  .kv{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #21262d;font-size:13px}
+  .kv b{color:#e6edf3;text-align:right}
+  button{background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer}
+  button:hover{background:#30363d}
+  button.go{background:#1f6feb;border-color:#1f6feb;font-weight:600}
+  button.go:hover{background:#388bfd}
+  .ctl{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+  input[type=range]{flex:1;min-width:110px;accent-color:#f0c000}
+  .fate{background:#161b22;border:1px solid #d29922;border-radius:8px;padding:8px 10px;font-size:13px;margin-top:8px}
+  .fate b{color:#d29922}
+  .note{color:#8b949e;font-size:12px}
+  .explain p{margin:8px 0}
+  .explain b{color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <h1>Vida de una estrella <span>¿cómo nace, brilla y muere?</span></h1>
+  <p class="alt"><a href="index.html">← llenado electrónico</a> · <a href="orbitales.html">nubes y orbitales</a> · <a href="espectro.html">espectro</a> · <a href="fusion.html">fusión pp →</a></p>
+</header>
+
+<main>
+  <section id="stage">
+    <div id="star"><canvas id="starcv"></canvas><div id="starlab"></div></div>
+    <div id="mid">
+      <div id="hrw"><canvas id="hrcv"></canvas><div id="hrlab">Diagrama H–R · luminosidad vs temperatura</div></div>
+      <div id="tl"></div>
+    </div>
+  </section>
+  <aside id="side">
+    <h2>La estrella</h2>
+    <div class="kv"><span>Masa inicial</span><b id="kvM">1.0 M☉</b></div>
+    <div class="kv"><span>Fase actual</span><b id="kvPh">—</b></div>
+    <div class="kv"><span>Duración real de la fase</span><b id="kvDur">—</b></div>
+    <div class="kv"><span>Quema en el núcleo</span><b id="kvBurn">—</b></div>
+    <div class="fate" id="fate"></div>
+
+    <h2>Controles</h2>
+    <div class="ctl"><span class="note">Masa</span><input type="range" id="mass" min="50" max="3000" step="10" value="100"><b id="massVal">1.0 M☉</b></div>
+    <div class="ctl">
+      <button id="btnPlay" class="go">▶ evolucionar</button>
+      <button id="btnReset">↺ reiniciar</button>
+      <span class="note">velocidad</span>
+      <button class="spd on" data-s="1">lenta</button><button class="spd" data-s="3">media</button><button class="spd" data-s="8">rápida</button>
+    </div>
+
+    <div class="explain">
+      <h2>La física</h2>
+      <p><b>1. El motor:</b> la estrella vive de la <b>fusión nuclear</b> — la cadena pp del hidrógeno para M ≲ 1.3 M☉, el ciclo CNO (catalizado por C,N,O) para las masivas. Detalle en <a href="fusion.html" style="color:#58a6ff">fusion.html</a>.</p>
+      <p><b>2. La balanza:</b> la gravedad aplasta, la presión del plasma empuja. Cuando se agota el combustible del núcleo, la estrella se reconfigura: se expande y se enfría (gigante roja), o quema capas más pesadas.</p>
+      <p><b>3. El destino lo decide la masa:</b> &lt;0.5 M☉ nunca enciende (enana marrón) · 0.5–8 M☉ → enana blanca · 8–25 M☉ → estrella de neutrones tras supernova · &gt;25 M☉ → agujero negro. Límites aproximados del modelo clásico.</p>
+      <p><b>4. El diagrama H–R</b> (luminosidad vs temperatura efectiva) es el mapa del ciclo: la secuencia principal es la "vida adulta"; la rama de gigantes es la vejez; la supernova es el final violento.</p>
+      <p class="note">Modelo esquemático con anclas calibradas a valores reales (L∝M^3.5, tiempos ~M^−2.5, temperaturas típicas por fase). Las duraciones se muestran reales pero la animación las comprime — la supernova dura días, la secuencia principal miles de millones de años.</p>
+    </div>
+  </aside>
+</main>
+
+<script src="js/estrella.js"></script>
+</body>
+</html>

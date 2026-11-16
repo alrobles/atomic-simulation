@@ -1,8 +1,8 @@
 # Orbitales y gases nobles
 
-Cuatro simulaciones interactivas (HTML + JavaScript, sin dependencias ni build): tres sobre la estructura electrónica de los gases nobles —**por qué tienen 2, 10, 18, 36, 54, 86 y 118 electrones** y **cómo emiten luz**— y una sobre la **fusión nuclear que alimenta al Sol**.
+Cuatro simulaciones interactivas (HTML + JavaScript, sin dependencias ni build): tres sobre la estructura electrónica de los gases nobles —**por qué tienen 2, 10, 18, 36, 54, 86 y 118 electrones** y **cómo emiten luz**— y dos sobre el destino de la materia: la **fusión nuclear del Sol** y el **ciclo de vida completo de una estrella**.
 
-## Las cuatro vistas
+## Las cinco vistas
 
 | Página | Qué muestra |
 |---|---|
@@ -10,6 +10,7 @@ Cuatro simulaciones interactivas (HTML + JavaScript, sin dependencias ni build):
 | [`orbitales.html`](orbitales.html) | **Gases nobles por pestañas** (He…Og): nube 3D del átomo, **campo de densidad** 2D (mapa de \|ψ\|² con contornos y escala en pm) y **distribución radial** P(r). Escala didáctica (capas en anillos) o real (Slater), control de giro, "pelar la cebolla" por capas y galería de orbitales del periodo. Usa los módulos de `js/`. |
 | [`espectro.html`](espectro.html) | **Espectro de emisión**: líneas espectrales reales del átomo neutro (NIST ASD, 250–1050 nm) sobre el arcoíris del visible, diagrama de niveles tipo Grotrian agrupado por tipo de orbital, y **simulación de excitación/emisión**: se excita un electrón externo y se anima la cascada de fotones emitidos (ΔE = hc/λ). Pestañas He…Og; Og no tiene datos (átomo de vida ~1 ms, espectro solo predicho). |
 | [`fusion.html`](fusion.html) | **Fusión nuclear (cadena pp)**: plasma 2D del núcleo solar con p⁺, d, ³He y ⁴He. Las reacciones `p+p→d`, `d+p→³He` y `³He+³He→⁴He` ocurren con probabilidades ∝ exp(−τ·T^−⅓) (ventana de Gamow, cualitativa). Control de temperatura (0.3–5 keV ≈ 3–58 MK), contadores de ⁴He y energía liberada, equivalencia E=mc² y registro de eventos. |
+| [`estrella.html`](estrella.html) | **Ciclo de vida estelar**: slider de masa inicial (0.5–30 M☉) que determina el destino. La estrella evoluciona por fases (secuencia principal → gigante → quemado de He → destino) dibujando su trayectoria en el **diagrama H–R** en vivo: color y tamaño reales por T y R. Enanas marrones, enanas blancas, estrellas de neutrones y agujeros negros. |
 
 Las cuatro comparten la misma física: soluciones exactas del hidrógeno, regla de Madelung (*n + l*) y los mismos colores de orbital (s rojo, p amarillo, d azul, f verde); cada una enfatiza una forma distinta de ver el mismo fenómeno. `fusion.html` amplía el proyecto del átomo al núcleo.
 
@@ -50,6 +51,7 @@ index.html        llenado electrónico — autocontenido
 orbitales.html    gases nobles — pestañas + 3 vistas
 ezpectro.html     espectro de emisión + diagrama de niveles + simulación
 fusion.html       cadena pp — plasma, fusiones y balance E=mc²
+estrella.html     ciclo de vida estelar — H–R + destinos por masa
 css/style.css     estilos de orbitales.html y espectro.html
 js/physics.js     orbitales, configuraciones, Slater, muestreo (también corre en Node)
 js/viewer.js      visor 3D en canvas 2D
@@ -60,9 +62,10 @@ js/espectro.js    espectro, diagrama de niveles y cascada de emisión
                     (funciones puras exportadas para pruebas en Node)
 js/fusion.js      cadena pp: plasma, fusiones, balance de energía
                     (funciones puras exportadas para pruebas en Node)
+js/estrella.js    fases estelares + diagrama H–R (modelo esquemático)
 tests/check.js    pruebas de la física: node tests/check.js
 ```
 
 ## Publicar en la web
 
-En GitHub: *Settings → Pages → Deploy from branch → main / root*. Queda en `https://alrobles.github.io/atomic-simulation/` (y `…/orbitales.html`, `…/espectro.html`, `…/fusion.html`).
+En GitHub: *Settings → Pages → Deploy from branch → main / root*. Queda en `https://alrobles.github.io/atomic-simulation/` (y `…/orbitales.html`, `…/espectro.html`, `…/fusion.html`, `…/estrella.html`).
