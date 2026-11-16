@@ -400,6 +400,12 @@ console.log("\n── 15. Hibridación y orbitales moleculares LCAO-MO ──");
   ok(near(Chem.moOverlap(0), 1, 1e-12) && Chem.moOverlap(2.5) > 0.4, "solapamiento S(0)=1 y S(2.5)>0.4");
   ok(Chem.moEnergy(2.5).dE_bond < 0 && Chem.moEnergy(2.5).dE_anti > 0, "σ₁ₛ es enlazante (ΔE<0) y σ₁ₛ* antienlazante (ΔE>0)");
   ok(near(Chem.evalMO("anti", 2.5, 0.7, -0.4, 0), 0, 1e-12), "σ₁ₛ* tiene plano nodal exacto en z = 0");
+  ok(Chem.vseprBondSCharacter(109.47122) > Chem.vseprBondSCharacter(107.0) &&
+     Chem.vseprBondSCharacter(107.0) > Chem.vseprBondSCharacter(104.5),
+     "teorema de Coulson: el carácter s del enlace disminuye CH₄ > NH₃ > H₂O");
+  const h2oCloud = Chem.genVSEPR("H2O", 1600);
+  ok(h2oCloud.length === 4 && h2oCloud.every(g => g.c > 0),
+     "genVSEPR('H2O') genera 4 lóbulos (2 enlaces σ + 2 pares solitarios)");
 }
 
 console.log("\n── 16. Superposición temporal Ψ(r, t) ──");

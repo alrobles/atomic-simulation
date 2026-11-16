@@ -21,6 +21,7 @@
   <nav id="tabs">
     <div class="tab on" data-mode="hybrid"><b>Hibridación</b><small>sp · sp² · sp³ · sp³d · sp³d²</small></div>
     <div class="tab" data-mode="mo"><b>LCAO-MO</b><small>H₂⁺ / H₂ · σ₁ₛ y σ₁ₛ*</small></div>
+    <div class="tab" data-mode="vsepr"><b>VSEPR · Agua</b><small>CH₄ · NH₃ · H₂O (109.5° → 104.5°)</small></div>
   </nav>
   <p class="alt">
     <a href="index.html">← portada</a> ·
@@ -83,6 +84,19 @@
       </div>
       <div class="q-card" id="moInfo"></div>
       <canvas id="moCurve"></canvas>
+    </div>
+
+    <div id="panelVSEPR" hidden>
+      <h2>Geometría VSEPR y pares solitarios</h2>
+      <div class="q-controls">
+        <div class="q-row" id="vseprBtns">
+          <button class="q-btn" data-v="CH4">CH₄ (109.5°)</button>
+          <button class="q-btn" data-v="NH3">NH₃ (107.0°)</button>
+          <button class="q-btn on" data-v="H2O">H₂O (104.5°)</button>
+        </div>
+      </div>
+      <div class="q-card" id="vseprInfo"></div>
+      <p style="margin:10px 0 0; font-size:13px;"><a href="agua.html" style="color:#58a6ff; text-decoration:none;">→ Ver la molécula de agua completa en agua.html</a></p>
     </div>
 
     <section class="explain" style="margin-top:14px;">

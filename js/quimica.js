@@ -11,6 +11,7 @@
     lobe: -1, // -1 = todos los lóbulos
     mo: "bond",
     R: 2.5,
+    vsepr: "H2O",
   };
 
   const mainV = new Viewer($("main"), { fill: 0.36, spin: 0.002 });
@@ -116,11 +117,29 @@
     drawMOCurve();
   }
 
+  function renderVSEPR() {
+    const m = C.VSEPR_MOLECULES[state.vsepr];
+    const ws = C.vseprBondSCharacter(m.angle);
+    mainV.setCloud(C.genVSEPR(state.vsepr, 26000));
+
+    $("info").innerHTML = `<div class="big">${m.formula} · ${m.name} (${m.angle.toFixed(1)}°)</div>
+      ${m.bonds} enlaces σ · ${m.lonePairs} ${m.lonePairs === 1 ? "par solitario" : "pares solitarios"}<br>
+      <span class="legend"><i style="background:#4dabf7"></i>enlaces σ <i style="background:#ffd43b"></i>pares solitarios</span>`;
+
+    $("vseprInfo").innerHTML = `
+      <div><b>${m.formula} (${m.geom})</b> · ángulo <b>${m.angle.toFixed(1)}°</b></div>
+      <div style="color:#8b949e; margin:4px 0;">Teorema de Coulson: <b>${(ws * 100).toFixed(1)}%</b> carácter <i>s</i> en cada enlace (<b>${((1 - ws) * 100).toFixed(1)}%</b> carácter <i>p</i>).</div>
+      <div>${m.desc}</div>
+    `;
+  }
+
   function render() {
     $("panelHybrid").hidden = state.mode !== "hybrid";
     $("panelMO").hidden = state.mode !== "mo";
+    $("panelVSEPR").hidden = state.mode !== "vsepr";
     if (state.mode === "hybrid") renderHybrid();
-    else renderMO();
+    else if (state.mode === "mo") renderMO();
+    else renderVSEPR();
   }
 
   $("tabs").addEventListener("click", (e) => {
@@ -157,6 +176,14 @@
     render();
   });
 
+  $("vseprBtns").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    state.vsepr = b.dataset.v;
+    document.querySelectorAll("#vseprBtns button").forEach((el) => el.classList.toggle("on", el === b));
+    render();
+  });
+
   $("rSlider").addEventListener("input", (e) => {
     state.R = +e.target.value;
     $("rVal").textContent = state.R.toFixed(2) + " a₀";
@@ -169,7 +196,11 @@
     $("pause").textContent = Viewer.paused ? "▶" : "⏸";
   });
   $("btnExportPNG").addEventListener("click", () => {
-    const name = state.mode === "hybrid" ? `hibrido_${state.hybrid}.png` : `H2_${state.mo}_R${state.R.toFixed(1)}.png`;
+    const name = state.mode === "hybrid"
+      ? `hibrido_${state.hybrid}.png`
+      : state.mode === "mo"
+      ? `H2_${state.mo}_R${state.R.toFixed(1)}.png`
+      : `vsepr_${state.vsepr}.png`;
     mainV.exportPNG(name, { transparent: true, scale: 2 });
   });
 

@@ -246,7 +246,130 @@
     return [pos, neg];
   }
 
-  const Chem = { HYBRIDS, psiNorm, evalHybrid, genHybrid, moOverlap, moEnergy, evalMO, genMO };
+  // ---------- Puente VSEPR (CH₄ → NH₃ → H₂O) y regla de Bent ----------
+  const VSEPR_MOLECULES = {
+    CH4: {
+      formula: "CH₄",
+      name: "Metano",
+      angle: 109.47,
+      bonds: 4,
+      lonePairs: 0,
+      geom: "Tetraédrica",
+      desc: "4 enlaces C–H equivalentes (0 pares solitarios). Simetría tetraédrica perfecta con 25% carácter s en cada enlace.",
+    },
+    NH3: {
+      formula: "NH₃",
+      name: "Amoníaco",
+      angle: 107.0,
+      bonds: 3,
+      lonePairs: 1,
+      geom: "Piramidal trigonal",
+      desc: "1 par solitario (dorado) concentra más carácter s y repele con más fuerza, cerrando el ángulo H–N–H a 107.0°.",
+    },
+    H2O: {
+      formula: "H₂O",
+      name: "Agua",
+      angle: 104.5,
+      bonds: 2,
+      lonePairs: 2,
+      geom: "Angular",
+      desc: "2 pares solitarios (dorado) comprimen el ángulo H–O–H hasta 104.5° (teorema de Coulson: ~20% carácter s en O–H).",
+    },
+  };
+
+  /** Teorema de Coulson: fracción de carácter s en dos híbridos equivalentes separados por ángulo θ (grados). */
+  function vseprBondSCharacter(angleDeg) {
+    const c = Math.cos((angleDeg * Math.PI) / 180);
+    return Math.max(0, Math.min(0.5, -c / (1 - c)));
+  }
+
+  function vseprDirs(key) {
+    if (key === "CH4") {
+      const s = 1 / Math.sqrt(3);
+      return [
+        { dir: [s, s, s], lone: false },
+        { dir: [s, -s, -s], lone: false },
+        { dir: [-s, s, -s], lone: false },
+        { dir: [-s, -s, s], lone: false },
+      ];
+    }
+    if (key === "NH3") {
+      // 1 par solitario en +z; 3 enlaces formando ángulo α=107° entre sí -> cos(α) = cos²θ_z + sin²θ_z cos(120°)
+      const ca = Math.cos((107.0 * Math.PI) / 180);
+      const cz = -Math.sqrt(Math.max(0, (1 + 2 * ca) / 3));
+      const sz = Math.sqrt(1 - cz * cz);
+      const dirs = [{ dir: [0, 0, 1], lone: true }];
+      for (let k = 0; k < 3; k++) {
+        const ph = (k * 2 * Math.PI) / 3;
+        dirs.push({ dir: [sz * Math.cos(ph), sz * Math.sin(ph), cz], lone: false });
+      }
+      return dirs;
+    }
+    // H2O: 2 enlaces en el plano xz a ±52.25° respecto a -z; 2 pares solitarios en el plano yz hacia +z
+    const half = (104.5 * Math.PI) / 360;
+    const lpHalf = (114.0 * Math.PI) / 360;
+    return [
+      { dir: [Math.sin(half), 0, -Math.cos(half)], lone: false },
+      { dir: [-Math.sin(half), 0, -Math.cos(half)], lone: false },
+      { dir: [0, Math.sin(lpHalf), Math.cos(lpHalf)], lone: true },
+      { dir: [0, -Math.sin(lpHalf), Math.cos(lpHalf)], lone: true },
+    ];
+  }
+
+  /** Nube 3D de orbitales híbridos VSEPR (enlaces en azul, pares solitarios en dorado). */
+  function genVSEPR(key, N) {
+    const m = VSEPR_MOLECULES[key];
+    if (!m) return [];
+    N = N || 24000;
+    const wsBond = vseprBondSCharacter(m.angle);
+    const wsLone = m.lonePairs > 0 ? Math.min(0.45, (1 - m.bonds * wsBond) / m.lonePairs) : 0.25;
+    const dirs = vseprDirs(key);
+    const rad = A.radial(2, 0), Rmax = rad.r99 * 1.15, S = 1 / rad.r99;
+    const per = Math.floor(N / dirs.length);
+
+    return dirs.map((d) => {
+      const ws = d.lone ? wsLone : wsBond;
+      const cs = Math.sqrt(ws), cp = Math.sqrt(1 - ws);
+      const terms = [
+        [2, 0, 0, cs],
+        [2, 1, 0, cp * d.dir[0]],
+        [2, 1, 1, cp * d.dir[1]],
+        [2, 1, 2, cp * d.dir[2]],
+      ];
+      const g = {
+        color: d.lone ? "#ffd43b" : "#4dabf7",
+        alpha: d.lone ? 0.48 : 0.44,
+        x: new Float32Array(per), y: new Float32Array(per), z: new Float32Array(per), c: 0,
+      };
+      let maxP = 0;
+      for (let k = 0; k < 2000; k++) {
+        const r = Rmax * Math.cbrt(Math.random());
+        const z = 2 * Math.random() - 1, p = 2 * Math.PI * Math.random(), s = Math.sqrt(1 - z * z);
+        const v = evalHybrid(terms, s * Math.cos(p) * r, s * Math.sin(p) * r, z * r);
+        if (v * v > maxP) maxP = v * v;
+      }
+      maxP *= 1.25;
+      let tries = 0;
+      while (g.c < per && tries < per * 45) {
+        tries++;
+        const r = Rmax * Math.cbrt(Math.random());
+        const z = 2 * Math.random() - 1, p = 2 * Math.PI * Math.random(), s = Math.sqrt(1 - z * z);
+        const x = s * Math.cos(p) * r, y = s * Math.sin(p) * r, zz = z * r;
+        const v = evalHybrid(terms, x, y, zz);
+        if (Math.random() * maxP < v * v) {
+          g.x[g.c] = x * S; g.y[g.c] = y * S; g.z[g.c] = zz * S; g.c++;
+        }
+      }
+      return g;
+    });
+  }
+
+  const Chem = {
+    HYBRIDS, VSEPR_MOLECULES,
+    psiNorm, evalHybrid, genHybrid,
+    vseprBondSCharacter, genVSEPR,
+    moOverlap, moEnergy, evalMO, genMO,
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = Chem;
   else root.Chem = Chem;
 })(typeof window !== "undefined" ? window : globalThis);
