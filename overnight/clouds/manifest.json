@@ -1,0 +1,429 @@
+{
+  "orb_1s": {
+    "file": "orb_1s.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 400000
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 0
+      }
+    ],
+    "bytes": 9600012
+  },
+  "orb_2p": {
+    "file": "orb_2p.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 199719
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 200281
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_3d": {
+    "file": "orb_3d.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 199802
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 200198
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_4f": {
+    "file": "orb_4f.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 199651
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 200349
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_2s": {
+    "file": "orb_2s.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 21056
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 378944
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_3p": {
+    "file": "orb_3p.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 199848
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 200152
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_4d": {
+    "file": "orb_4d.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 200103
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 199897
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_5f": {
+    "file": "orb_5f.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 199979
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 200021
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_2p1": {
+    "file": "orb_2p1.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 199840
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 200160
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_3d1": {
+    "file": "orb_3d1.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 199683
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 200317
+      }
+    ],
+    "bytes": 4800012
+  },
+  "orb_3d2": {
+    "file": "orb_3d2.bin",
+    "groups": [
+      {
+        "color": "#4dabf7",
+        "alpha": 0.45,
+        "count": 246086
+      },
+      {
+        "color": "#ff922b",
+        "alpha": 0.45,
+        "count": 153914
+      }
+    ],
+    "bytes": 4800012
+  },
+  "atom_Z2": {
+    "file": "atom_Z2.bin",
+    "groups": [
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 250000
+      }
+    ],
+    "bytes": 3000008
+  },
+  "atom_Z10": {
+    "file": "atom_Z10.bin",
+    "groups": [
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 50000
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 50000
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 150000
+      }
+    ],
+    "bytes": 3000016
+  },
+  "atom_Z18": {
+    "file": "atom_Z18.bin",
+    "groups": [
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 27776
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 27776
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 83328
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 27776
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 83328
+      }
+    ],
+    "bytes": 2999832
+  },
+  "atom_Z36": {
+    "file": "atom_Z36.bin",
+    "groups": [
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 13888
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 13888
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 41664
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 13888
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 41664
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 13888
+      },
+      {
+        "color": "#4dabf7",
+        "alpha": 0.42,
+        "count": 69440
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 41664
+      }
+    ],
+    "bytes": 2999844
+  },
+  "atom_Z54": {
+    "file": "atom_Z54.bin",
+    "groups": [
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 9258
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 9258
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 27774
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 9258
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 27774
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 9258
+      },
+      {
+        "color": "#4dabf7",
+        "alpha": 0.42,
+        "count": 46290
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 27774
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 9258
+      },
+      {
+        "color": "#4dabf7",
+        "alpha": 0.42,
+        "count": 46290
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 27774
+      }
+    ],
+    "bytes": 2999640
+  },
+  "atom_Z86": {
+    "file": "atom_Z86.bin",
+    "groups": [
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 5812
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 5812
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 17436
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 5812
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 17436
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 5812
+      },
+      {
+        "color": "#4dabf7",
+        "alpha": 0.42,
+        "count": 29060
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 17436
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 5812
+      },
+      {
+        "color": "#4dabf7",
+        "alpha": 0.42,
+        "count": 29060
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 17436
+      },
+      {
+        "color": "#ff6b6b",
+        "alpha": 0.42,
+        "count": 5812
+      },
+      {
+        "color": "#69db7c",
+        "alpha": 0.42,
+        "count": 40684
+      },
+      {
+        "color": "#4dabf7",
+        "alpha": 0.42,
+        "count": 29060
+      },
+      {
+        "color": "#ffd43b",
+        "alpha": 0.42,
+        "count": 17436
+      }
+    ],
+    "bytes": 2999056
+  }
+}
