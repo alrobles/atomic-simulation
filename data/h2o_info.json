@@ -1,0 +1,15 @@
+{
+ "method": "RHF / STO-3G (PySCF 2.15)",
+ "geometry": "d(O-H)=0.9584 \u00c5, \u00e1ngulo HOH=104.5\u00b0",
+ "E_hartree": -74.9631043165365,
+ "dipole_debye": 1.7243571359857406,
+ "mulliken_charges": {
+  "O": -0.36519312534896997,
+  "H": 0.18259656267448487
+ },
+ "HOMO_eV": -10.644525564035073,
+ "LUMO_eV": 16.4496180396396,
+ "n_points": 50000,
+ "format": "Float32 [x,y,z,w]; w = peso visual 0..1",
+ "note": "Muestras \u221d \u03c1(r) de la ret\u00edcula 200\u00b3; no son electrones individuales."
+}

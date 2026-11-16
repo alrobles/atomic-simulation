@@ -1,5 +1,7 @@
-/* agua.js — geometría y visualización cualitativa de H₂O.
- * La densidad dibujada es un esquema VSEPR, no un cálculo ab initio. */
+/* agua.js — geometría y visualización de H₂O.
+ * Vista Molécula/Vibración: modelo VSEPR cualitativo.
+ * Vista Densidad: si data/h2o_density.bin existe, nube muestreada de la
+ * densidad electrónica real RHF/STO-3G (PySCF); si no, esquema ilustrativo. */
 (function () {
 "use strict";
 
@@ -52,6 +54,14 @@ function normal() {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 const densitySamples = { core: [], lone: [[], []], bond: [[], []] };
+// Densidad real RHF/sto-3g: Float32 [x,y,z,w]*N en coordenadas de waterGeometry.
+let realDensity = null, hfInfo = null;
+fetch("data/h2o_density.bin").then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+  .then(buf => { realDensity = new Float32Array(buf); })
+  .catch(() => {});
+fetch("data/h2o_info.json").then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(j => { hfInfo = j; })
+  .catch(() => {});
 for (let i = 0; i < 600; i++) {
   densitySamples.core.push({ x: normal() * 0.14, y: normal() * 0.14, z: normal() * 0.14 });
 }
@@ -142,6 +152,17 @@ function drawDensity(g, angle) {
     const scale = base / (1 + z2 * 0.13);
     ctx.fillRect(cx + x1 * scale, cy0 - y1 * scale, size, size);
   };
+  // Densidad electrónica real RHF/STO-3G: 50k muestras ∝ ρ(r), tamaño ∝ peso local.
+  if (realDensity) {
+    const n = realDensity.length, d = realDensity;
+    ctx.globalAlpha = 0.42; ctx.fillStyle = colors.density;
+    for (let i = 0; i < n; i += 4) {
+      const s = 1.0 + d[i + 3] * 1.5;
+      point(d[i], d[i + 1], d[i + 2], s);
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
   // Muestras didácticas de regiones electrónicas; no son electrones individuales.
   ctx.globalAlpha = 0.28; ctx.fillStyle = colors.oxygen;
   for (const q of densitySamples.core) point(q.x, q.y, q.z, 1.7);
@@ -225,18 +246,27 @@ function drawLabels(g) {
 }
 
 function updateText(angle) {
+  const real = view === "density" && realDensity;
+  const nPts = real ? realDensity.length / 4 : DENSITY_POINTS;
   const labels = {
     structure: ["Molécula", "Modelo de bolas y varillas: O rojo, H claro; los núcleos forman un ángulo de 104.5°."],
-    density: ["Densidad electrónica (esquema)", "Puntos = muestras ilustrativas de densidad en enlaces y pares libres; no son electrones individuales ni un cálculo molecular exacto."],
+    density: [real ? "Densidad electrónica · RHF/STO-3G" : "Densidad electrónica (esquema)",
+      real ? "Puntos muestreados de ρ(r) calculada con Hartree-Fock/STO-3G (PySCF) en la geometría de equilibrio; no son electrones individuales. El tamaño del punto crece con la densidad local."
+           : "Puntos = muestras ilustrativas de densidad en enlaces y pares libres; no son electrones individuales ni un cálculo molecular exacto."],
     vibration: ["Vibración molecular", vibMode === "bend" ? "Flexión: cambia el ángulo H–O–H; la animación está ralentizada para verla." : vibMode === "asymmetric" ? "Estiramiento asimétrico: un enlace O–H se alarga mientras el otro se acorta." : "Estiramiento simétrico: ambos enlaces O–H se alargan y acortan juntos."],
   };
   $("sceneLabel").innerHTML = `<b>${labels[view][0]}</b> · ${labels[view][1]}`;
+  const hf = real && hfInfo
+    ? ` · E_HF ${hfInfo.E_hartree.toFixed(2)} Ha · μ ${hfInfo.dipole_debye.toFixed(2)} D · q(O) ${hfInfo.mulliken_charges.O.toFixed(2)}e`
+    : "";
   $("modeInfo").textContent = `Ángulo actual: ${angle.toFixed(1)}° · longitud O–H: ${BOND_ANGSTROM.toFixed(4)} Å · momento dipolar: ${DIPOLE_DEBYE} D` +
-    (view === "density" ? ` · ${DENSITY_POINTS.toLocaleString("es")} muestras` : "");
+    (view === "density" ? ` · ${Math.round(nPts).toLocaleString("es")} muestras${hf}` : "");
   $("densityText").innerHTML = view === "density"
-    ? "Los puntos son <b>muestras</b> de un esquema de densidad electrónica, no electrones individuales."
+    ? (real
+      ? "Los puntos son <b>muestras de la densidad electrónica real</b> (HF/STO-3G, base mínima): la distribución cuántica de los 10 electrones en el estado fundamental. No son electrones individuales ni un cálculo con correlación." 
+      : "Los puntos son <b>muestras</b> de un esquema de densidad electrónica, no electrones individuales.")
     : "La vista <b>Molécula</b> muestra núcleos y enlaces como bolas y varillas: no dibuja electrones individuales.";
-  $("angleControl").hidden = view === "vibration";
+  $("angleControl").hidden = view === "vibration" || real;
   $("vibControls").hidden = view !== "vibration";
 }
 
@@ -244,7 +274,11 @@ function draw(now) {
   if (!fit()) return;
   drawBackground();
   if (spinning && !drag) yaw += 0.0018;
-  const { g, angle } = animatedGeometry();
+  // Con densidad real, la geometría es la de equilibrio HF (el ángulo editable no aplica).
+  const real = view === "density" && realDensity;
+  const { g, angle } = real
+    ? { g: waterGeometry(ANGLE_DEG, BOND_ANGSTROM), angle: ANGLE_DEG }
+    : animatedGeometry();
   if (view === "density") drawDensity(g, angle);
   // Bonds are behind the atomic spheres.
   drawBond(g.O, g.H1); drawBond(g.O, g.H2);

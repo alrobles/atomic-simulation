@@ -113,6 +113,9 @@
       <option value="180">180</option>
     </select><span id="countReadSide" class="note"></span></div>
     <div class="callout" id="phaseDesc"></div>
+    <h2>Respuesta del modelo a T*</h2>
+    <canvas id="sweep" width="300" height="140" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px" aria-label="Gráfica de puentes de hidrógeno por molécula contra temperatura reducida"></canvas>
+    <p class="note">Curva medida offline con este mismo modelo (9 temperaturas, promediando los últimos tramos). Las líneas verticales doradas marcan los T* de sólido/líquido/gas; el punto rojo sigue tu temperatura actual. Es la respuesta del modelo 2D, no el diagrama de fases real del agua.</p>
     <h2>¿Cómo interactúan?</h2>
     <p>Las moléculas son cuerpos rígidos con un oxígeno y dos hidrógenos. El modelo calcula fuerzas entre vecinas: una atracción de corto alcance tipo <b>Lennard‑Jones</b> y una atracción direccional simplificada para los puentes de hidrógeno. La orientación también puede girar por el torque.</p>
     <p>Arranca desde una configuración sólida, líquida o gaseosa y cambia T*. Al calentar, las moléculas ganan movimiento y la estructura se desordena; al enfriar, las atracciones las agrupan.</p>

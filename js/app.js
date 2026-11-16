@@ -120,8 +120,8 @@
       if (state.view === "cloud") {
         mainV.slice = 0;
         Viewer.genCloudAsync(
-          { type: "orbital", n: o.n, l: o.l, i: o.i, N: 30000 },
-          () => A.genOrbital(o.n, o.l, o.i, 30000),
+          { type: "orbital", n: o.n, l: o.l, i: o.i, N: 60000 },
+          () => A.genOrbital(o.n, o.l, o.i, 60000),
           (groups, id, latest) => { if (id === latest && state.view === "cloud" && state.orbital) mainV.setCloud(groups); }
         );
       } else if (state.view === "field") {
@@ -164,13 +164,33 @@
         scale: state.scale,
         visible: Array.from(state.visible),
         highlightNew: state.highlight,
-        points: state.slice ? 160000 : 40000,
+        points: state.slice ? 160000 : 80000,
       };
-      Viewer.genCloudAsync(
+      const genLive = () => Viewer.genCloudAsync(
         { type: "atom", kOrZ: state.k, opts: atomOpts },
         () => A.genAtom(state.k, { ...atomOpts, visible: state.visible }),
         (groups, id, latest) => { if (id === latest && state.view === "cloud" && !state.orbital) mainV.setCloud(groups); }
       );
+      // Nube precalculada (data/clouds): solo aplica en la config por defecto
+      // — escala didáctica + resaltado de carozo + modo rebanada + todas las capas.
+      const kNow = state.k;
+      const confNow = A.nobleConfig(kNow);
+      const binOk = state.scale !== "real" && state.highlight && state.slice &&
+        confNow.every(s => state.visible.has(s.lab));
+      const stillValid = () => state.view === "cloud" && !state.orbital && state.k === kNow &&
+        state.scale !== "real" && state.highlight && state.slice &&
+        A.nobleConfig(kNow).every(s => state.visible.has(s.lab));
+      if (binOk) {
+        Viewer.loadCloudManifest().then(mf => {
+          const asset = mf && mf.assets && mf.assets["atom_k" + kNow];
+          return asset ? Viewer.loadCloudBin(asset).then(g => ({ g })) : null;
+        }).then(res => {
+          if (res && stillValid()) { mainV.setCloud(res.g); return; }
+          if (!res) genLive();
+        }).catch(() => genLive());
+      } else {
+        genLive();
+      }
     } else if (state.view === "field") {
       const shells = A.atomShells(state.k, state.visible, { isNobleIndex: true });
       const maxR = Math.max(...shells.map(s => s.rmax), 5);

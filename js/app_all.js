@@ -300,8 +300,8 @@
       if (state.view === "cloud") {
         mainV.slice = 0;
         const req = Viewer.genCloudAsync(
-          { type: "orbital", n: o.n, l: o.l, i: o.i, N: 30000 },
-          () => A.genOrbital(o.n, o.l, o.i, 30000),
+          { type: "orbital", n: o.n, l: o.l, i: o.i, N: 60000 },
+          () => A.genOrbital(o.n, o.l, o.i, 60000),
           (groups, id, latest) => { if (id === latest && state.view === "cloud" && state.orbital) mainV.setCloud(groups); }
         );
       } else if (state.view === "field") {
@@ -339,7 +339,7 @@
 
     if (state.view === "cloud") {
       mainV.slice = state.slice ? 0.06 : 0;
-      const pts = state.slice ? 160000 : 40000;
+      const pts = state.slice ? 160000 : 80000;
       const atomOpts = {
         scale: state.scale,
         visible: Array.from(state.visible),

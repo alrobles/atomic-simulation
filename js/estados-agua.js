@@ -53,6 +53,19 @@ let paused = false, box = { x: 0, y: 0, w: 0, h: 0 }, unit = 40;
 let W = 0, H = 0, frameCount = 0, statCount = 0, fpsWindow = [];
 let last = performance.now(), prng = 90210;
 
+// Snapshots equilibrados offline (overnight/md-sweep.js, 400k pasos por fase).
+// Formato: {box:{w,h}, rows:[[x,y,theta,vx,vy,omega],...]} — último snap de cada fase.
+const snapCache = {};
+let sweepRows = null;
+const snapsReady = Promise.all(Object.keys(PHASES).map(ph =>
+  fetch(`overnight/md/snaps_${ph}.json`).then(r => r.ok ? r.json() : null)
+    .then(d => { if (d && d.snaps && d.snaps.length) snapCache[ph] = { box: d.box, rows: d.snaps[d.snaps.length - 1].data }; })
+    .catch(() => {})
+)).then(() =>
+  fetch("overnight/md/sweep.json").then(r => r.ok ? r.json() : null)
+    .then(d => { sweepRows = d; }).catch(() => {})
+);
+
 function rand() {
   prng = (1664525 * prng + 1013904223) >>> 0;
   return prng / 4294967296;
@@ -97,8 +110,34 @@ function newMolecule(x, y, theta, thermalScale = 0.45) {
   };
 }
 
+// Si hay snapshot equilibrado de la fase, lo usa como semilla (reescala a la
+// caja actual y ajusta el conteo); si no, devuelve false y sigue el init aleatorio.
+function initFromSnapshot() {
+  const s = snapCache[phase];
+  if (!s || !s.rows.length) return false;
+  const rows = s.rows, take = Math.min(particleTarget, rows.length);
+  const sx = box.w / s.box.w, sy = box.h / s.box.h;
+  for (let i = 0; i < take; i++) {
+    // Muestreo estratificado: cobertura uniforme del snapshot aunque take < rows.length.
+    const r = rows[Math.floor(i * rows.length / take)];
+    molecules.push({
+      x: r[0] * sx, y: r[1] * sy, theta: r[2],
+      vx: r[3], vy: r[4], omega: r[5],
+      fx: 0, fy: 0, torque: 0,
+    });
+  }
+  while (molecules.length < particleTarget) {
+    molecules.push(newMolecule(
+      box.x + 0.8 + rand() * Math.max(1, box.w - 1.6),
+      box.y + 0.8 + rand() * Math.max(1, box.h - 1.6),
+      rand() * Math.PI * 2, Math.sqrt(targetT) * 0.55));
+  }
+  return molecules.length === particleTarget;
+}
+
 function initializePositions() {
   molecules = [];
+  if (initFromSnapshot()) { bonds = []; return; }
   if (phase === "solid") {
     const nx = Math.max(4, Math.ceil(Math.sqrt(particleTarget * box.w / Math.max(1, box.h))));
     const ny = Math.ceil(particleTarget / nx), spacing = Math.min(1.15, Math.max(0.88, Math.sqrt((box.w * box.h) / particleTarget)));
@@ -376,6 +415,54 @@ function draw() {
   ctx.fillText("caja de simulación 2D", W / 2, H - 8);
 }
 
+// Curva bondFrac vs T* medida offline (overnight/md/sweep.json): referencia
+// del propio modelo — no es un diagrama de fases experimental del agua real.
+function drawSweep() {
+  const c = $("sweep");
+  if (!c || !sweepRows || !sweepRows.length) return;
+  const g = c.getContext("2d"), w = c.width, h = c.height;
+  const X = t => 30 + (t / 2.4) * (w - 42);
+  const Y = b => h - 16 - (b - 0.72) / 0.95 * (h - 30);
+  g.clearRect(0, 0, w, h);
+  g.fillStyle = "#0d1117"; g.fillRect(0, 0, w, h);
+  g.strokeStyle = "rgba(139,148,158,0.25)"; g.lineWidth = 1;
+  for (const b of [0.8, 1.0, 1.2, 1.4]) {
+    g.beginPath(); g.moveTo(30, Y(b)); g.lineTo(w - 12, Y(b)); g.stroke();
+    g.fillStyle = "#8b949e"; g.font = "9px system-ui"; g.textAlign = "right";
+    g.fillText(b.toFixed(1), 27, Y(b) + 3);
+  }
+  for (const t of [0.5, 1.0, 1.5, 2.0]) {
+    g.beginPath(); g.moveTo(X(t), 14); g.lineTo(X(t), h - 16); g.stroke();
+    g.fillStyle = "#8b949e"; g.textAlign = "center"; g.fillText(t.toFixed(1), X(t), h - 4);
+  }
+  g.fillStyle = "#8b949e"; g.textAlign = "left"; g.font = "9px system-ui";
+  g.fillText("T*", w - 14, h - 4); g.save(); g.translate(9, h / 2); g.rotate(-Math.PI / 2); g.fillText("puentes H / molécula", 0, 0); g.restore();
+  // Fases del modelo como líneas verticales tenues.
+  g.strokeStyle = "rgba(240,192,0,0.30)"; g.setLineDash([2, 3]);
+  for (const ph of Object.keys(PHASES)) {
+    g.beginPath(); g.moveTo(X(PHASES[ph].target), 14); g.lineTo(X(PHASES[ph].target), h - 16); g.stroke();
+  }
+  g.setLineDash([]);
+  // Curva medida.
+  g.strokeStyle = "#58a6ff"; g.lineWidth = 1.6; g.beginPath();
+  sweepRows.forEach((r, i) => i ? g.lineTo(X(r.T), Y(r.bondFrac)) : g.moveTo(X(r.T), Y(r.bondFrac)));
+  g.stroke();
+  // Marcador en la T* actual (interpolación lineal sobre la curva).
+  const t = targetT;
+  let bf = sweepRows[0].bondFrac;
+  for (let i = 1; i < sweepRows.length; i++) {
+    if (t <= sweepRows[i].T) {
+      const a = sweepRows[i - 1], b = sweepRows[i];
+      bf = a.bondFrac + (b.bondFrac - a.bondFrac) * (t - a.T) / (b.T - a.T);
+      break;
+    }
+    bf = sweepRows[i].bondFrac;
+  }
+  g.strokeStyle = "rgba(248,81,73,0.55)"; g.setLineDash([3, 3]);
+  g.beginPath(); g.moveTo(X(t), 14); g.lineTo(X(t), h - 16); g.stroke(); g.setLineDash([]);
+  g.fillStyle = "#f85149"; g.beginPath(); g.arc(X(t), Y(bf), 3, 0, Math.PI * 2); g.fill();
+}
+
 function updateStats() {
   const phaseLabel = PHASES[phase].label;
   $("phaseName").textContent = phaseLabel;
@@ -393,7 +480,11 @@ function updateStats() {
     liquid: "Inicio líquido: moléculas densas y móviles forman y rompen puentes de hidrógeno continuamente.",
     gas: "Inicio gaseoso: moléculas más separadas recorren la caja y chocan ocasionalmente.",
   };
-  $("phaseDesc").innerHTML = `<b>${phaseLabel}:</b> ${descriptions[phase]}`;
+  const seedNote = snapCache[phase]
+    ? " La configuración inicial proviene de un snapshot equilibrado offline (400k pasos)."
+    : "";
+  $("phaseDesc").innerHTML = `<b>${phaseLabel}:</b> ${descriptions[phase]}${seedNote}`;
+  drawSweep();
 }
 
 $("phases").querySelectorAll("button").forEach(b => b.onclick = () => reset(b.dataset.phase));
@@ -429,8 +520,13 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-if (fit()) { chooseParticleCount("auto"); reset("liquid"); }
-requestAnimationFrame(frame);
+// Arranque: espera los snapshots (máx ~1.2 s) para sembrar con configuraciones
+// equilibradas; si fallan o tardan, inicia igual con el init aleatorio.
+function boot() {
+  if (fit()) { chooseParticleCount("auto"); reset("liquid"); }
+  requestAnimationFrame(frame);
+}
+Promise.race([snapsReady, new Promise(r => setTimeout(r, 1200))]).then(boot);
 })();
 
 if (typeof module !== "undefined")

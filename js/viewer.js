@@ -174,5 +174,41 @@
   };
   Viewer.latestCloudReq = () => _reqId;
 
+  // ---------- Nubes precalculadas (data/clouds/, uint16 cuantizado) ----------
+  // manifest.assets[name] = {file, groups:[{color,alpha,count}], bbox:{lo,hi}}
+  const _binCache = new Map();   // url -> Promise<groups>
+  Viewer.loadCloudManifest = function () {
+    return fetch("data/clouds/manifest.json")
+      .then(r => (r.ok ? r.json() : null)).catch(() => null);
+  };
+  Viewer.loadCloudBin = function (asset) {
+    const url = "data/clouds/" + asset.file;
+    if (!_binCache.has(url)) {
+      _binCache.set(url, fetch(url).then(r => {
+        if (!r.ok) throw new Error("cloud bin " + r.status);
+        return r.arrayBuffer();
+      }).then(buf => {
+        const dv = new DataView(buf);
+        const { lo, hi } = asset.bbox;
+        const span = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
+        let o = 4; // salta nGroups
+        const groups = [];
+        for (let gi = 0; gi < asset.groups.length; gi++) {
+          const meta = asset.groups[gi];
+          const c = dv.getUint32(o, true); o += 4;
+          const x = new Float32Array(c), y = new Float32Array(c), z = new Float32Array(c);
+          for (let i = 0; i < c; i++) {
+            x[i] = lo[0] + dv.getUint16(o, true) / 65535 * span[0]; o += 2;
+            y[i] = lo[1] + dv.getUint16(o, true) / 65535 * span[1]; o += 2;
+            z[i] = lo[2] + dv.getUint16(o, true) / 65535 * span[2]; o += 2;
+          }
+          groups.push({ color: meta.color, alpha: meta.alpha, c, x, y, z });
+        }
+        return groups;
+      }));
+    }
+    return _binCache.get(url);
+  };
+
   root.Viewer = Viewer;
 })(window);
