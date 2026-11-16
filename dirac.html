@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>De Thomson a Dirac y más allá — Historia y Simulación de 2 Partículas</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .d-card { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:12px; font-size:13px; line-height:1.5; margin-bottom:10px; }
+  .d-eq { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:8px 10px; font-family:ui-monospace,monospace; font-size:13px; color:#f0c000; margin:8px 0; overflow-x:auto; }
+  .d-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0; }
+  .d-btn { background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:5px 10px; font-size:13px; cursor:pointer; }
+  .d-btn:hover { background:#30363d; }
+  .d-btn.on { background:#f0c000; color:#000; border-color:#f0c000; font-weight:700; }
+  #histCanvas, #diracCanvas { width:100%; height:100%; display:block; }
+  .sm-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:4px; margin-top:8px; }
+  .sm-cell { background:#21262d; border:1px solid #30363d; border-radius:6px; padding:5px 4px; text-align:center; display:flex; flex-direction:column; line-height:1.15; }
+  .sm-cell b { font-size:14px; }
+  .sm-cell small { font-size:9px; color:#8b949e; }
+  .sm-cell span { font-size:9px; color:#c9d1d9; margin-top:2px; }
+  .sm-quark { border-top:2px solid #b197fc; }
+  .sm-lepton { border-top:2px solid #69db7c; }
+  .sm-gauge { border-top:2px solid #ff6b6b; }
+  .sm-higgs { border-top:2px solid #f0c000; }
+  .sm-empty { visibility:hidden; }
+</style>
+</head>
+<body>
+<header>
+  <h1>De Thomson a Dirac y el Modelo Estándar <span>Evolución de las ecuaciones y simulación de Dirac (2 partículas)</span></h1>
+  <nav id="tabs">
+    <div class="tab on" data-tab="history"><b>1. Historia (1904 → Hoy)</b><small>Slide de modelos y ecuaciones</small></div>
+    <div class="tab" data-tab="dirac2p"><b>2. Dirac: 2 Partículas</b><small>Simulador (1+1)D en (x₁, x₂)</small></div>
+  </nav>
+  <p class="alt">
+    <a href="index.html">← portada</a> ·
+    <a href="orbitales.html">gases nobles</a> ·
+    <a href="orbitales_all.html">tabla periódica</a> ·
+    <a href="espectro.html">espectro y Zeeman</a> ·
+    <a href="quimica.html">hibridación y enlace</a> ·
+    <a href="superposicion.html">superposición Ψ(r,t)</a>
+  </p>
+</header>
+
+<main>
+  <section id="stage" data-view="field">
+    <div id="viewHistory" style="position:relative; width:100%; height:100%; flex:1; min-height:0;">
+      <canvas id="histCanvas"></canvas>
+    </div>
+    <div id="viewDirac2P" hidden style="display:flex; flex-direction:column; width:100%; height:100%; flex:1; min-height:0;">
+      <div id="toolbar">
+        <button id="btnSimPlay" class="on">⏸ Pausar</button>
+        <button id="btnSimReset">↺ Reiniciar</button>
+        <div class="spin">
+          <span class="seglab">Velocidad c</span>
+          <input type="range" id="cSlider" min="0.5" max="2.5" step="0.1" value="1.2">
+          <span id="cVal" style="font-size:12px; color:#f0c000;">1.2</span>
+        </div>
+        <button id="btnExportPNG" title="Exportar mapa (x₁, x₂) a PNG">📷 PNG</button>
+      </div>
+      <div style="position:relative; flex:1; min-height:0;">
+        <canvas id="diracCanvas"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <aside id="side">
+    <div id="sideHistory">
+      <h2>Línea del tiempo</h2>
+      <div class="d-row">
+        <button id="histPrev" class="d-btn">◀ Ant</button>
+        <input type="range" id="histSlider" min="0" max="9" step="1" value="7" style="flex:1;">
+        <button id="histNext" class="d-btn">Sig ▶</button>
+      </div>
+
+      <div class="d-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b id="histTitle" style="font-size:15px; color:#f0c000;"></b>
+          <span id="histYear" style="font-size:12px; color:#8b949e;"></span>
+        </div>
+        <div class="d-eq" id="histEq"></div>
+        <p style="margin:6px 0;"><b>Qué explica:</b> <span id="histExplains"></span></p>
+        <p style="margin:6px 0;"><b>Qué falla / límite:</b> <span id="histFails"></span></p>
+      </div>
+
+      <div id="smTableWrap" hidden></div>
+    </div>
+
+    <div id="sideDirac2P" hidden>
+      <h2>Escenario (2 partículas de Dirac)</h2>
+      <div class="d-row" id="simPresets">
+        <button class="d-btn on" data-p="ee-pauli">e⁻ + e⁻ (Colisión)</button>
+        <button class="d-btn" data-p="ep-bound">e⁻ + e⁺ (Positronio)</button>
+        <button class="d-btn" data-p="klein">Barrera Klein</button>
+      </div>
+
+      <div style="font-size:12px; color:#8b949e; margin-top:8px;">Estadística cuántica de intercambio:</div>
+      <div class="d-row" id="symBtns">
+        <button class="d-btn on" data-s="anti">Fermiones (antisimétrica)</button>
+        <button class="d-btn" data-s="sym">Bosones (simétrica)</button>
+      </div>
+
+      <section class="explain" style="margin-top:12px;">
+        <h2>¿Qué muestra el mapa (x₁, x₂)?</h2>
+        <p><b>1. Espacio de configuración:</b> El eje horizontal es la posición <i>x₁</i> de la partícula 1 y el vertical la <i>x₂</i> de la partícula 2. La curva azul superior es la densidad marginal ρ₁(x₁).</p>
+        <p><b>2. Exclusión de Pauli:</b> En fermiones antisimétricos (Ψ(x₁,x₂) = −Ψ(x₂,x₁)), la diagonal punteada <i>x₁ = x₂</i> permanece vacía: nunca ocupan el mismo punto.</p>
+        <p><b>3. Integrador unitario:</b> Evolución exacta por <i>Split-Step FFT</i> en 4 componentes espinoriales (++, +−, −+, −−) conservando ∫|Ψ|² = 1.</p>
+      </section>
+    </div>
+  </aside>
+</main>
+
+<script src="js/dirac.js"></script>
+</body>
+</html>
