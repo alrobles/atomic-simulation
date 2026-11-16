@@ -7,6 +7,7 @@
 const MIN_PARTICLES = 54;
 const MAX_PARTICLES = 180;
 const DEFAULT_PARTICLES = 96;
+const MOL_SCALE = 0.68;
 const SIGMA = 1;
 const CUTOFF = 2.5 * SIGMA;
 const EPS_LJ = 0.22;
@@ -307,15 +308,16 @@ function drawMolecule(m) {
   const ox = box.x * unit + (W - box.w * unit) / 2;
   const oy = box.y * unit + (H - box.h * unit) / 2;
   const x = ox + m.x * unit, y = oy + m.y * unit;
-  const h1 = [x + BOND * unit * Math.cos(m.theta - HALF_ANGLE), y + BOND * unit * Math.sin(m.theta - HALF_ANGLE)];
-  const h2 = [x + BOND * unit * Math.cos(m.theta + HALF_ANGLE), y + BOND * unit * Math.sin(m.theta + HALF_ANGLE)];
-  ctx.strokeStyle = "rgba(201,209,217,0.62)"; ctx.lineWidth = 2.2;
+  const mu = unit * MOL_SCALE;
+  const h1 = [x + BOND * mu * Math.cos(m.theta - HALF_ANGLE), y + BOND * mu * Math.sin(m.theta - HALF_ANGLE)];
+  const h2 = [x + BOND * mu * Math.cos(m.theta + HALF_ANGLE), y + BOND * mu * Math.sin(m.theta + HALF_ANGLE)];
+  ctx.strokeStyle = "rgba(201,209,217,0.62)"; ctx.lineWidth = Math.max(1.3, mu * 0.05);
   ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(h1[0], h1[1]); ctx.moveTo(x, y); ctx.lineTo(h2[0], h2[1]); ctx.stroke();
-  ctx.fillStyle = COLORS.O; ctx.shadowColor = COLORS.O; ctx.shadowBlur = 8;
-  ctx.beginPath(); ctx.arc(x, y, Math.max(4.3, unit * 0.13), 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COLORS.O; ctx.shadowColor = COLORS.O; ctx.shadowBlur = 6;
+  ctx.beginPath(); ctx.arc(x, y, Math.max(3.4, mu * 0.13), 0, Math.PI * 2); ctx.fill();
   ctx.shadowBlur = 0;
   ctx.fillStyle = COLORS.H;
-  for (const h of [h1, h2]) { ctx.beginPath(); ctx.arc(h[0], h[1], Math.max(2.5, unit * 0.073), 0, Math.PI * 2); ctx.fill(); }
+  for (const h of [h1, h2]) { ctx.beginPath(); ctx.arc(h[0], h[1], Math.max(2.0, mu * 0.073), 0, Math.PI * 2); ctx.fill(); }
 }
 
 function draw() {
