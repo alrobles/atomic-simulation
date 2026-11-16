@@ -1,16 +1,17 @@
 # Orbitales y gases nobles
 
-Tres simulaciones interactivas (HTML + JavaScript, sin dependencias ni build) para entender **por qué los gases nobles tienen 2, 10, 18, 36, 54, 86 y 118 electrones** y **cómo sus electrones externos emiten luz**.
+Cuatro simulaciones interactivas (HTML + JavaScript, sin dependencias ni build): tres sobre la estructura electrónica de los gases nobles —**por qué tienen 2, 10, 18, 36, 54, 86 y 118 electrones** y **cómo emiten luz**— y una sobre la **fusión nuclear que alimenta al Sol**.
 
-## Las tres vistas
+## Las cuatro vistas
 
 | Página | Qué muestra |
 |---|---|
 | [`index.html`](index.html) | **Llenado electrónico**: el átomo se llena electrónon por electrónon (slider 0–118 e⁻, botones −1/+1, "siguiente gas noble", animación). Tabla de periodos con cajitas de orbitales, configuración con carozo [gas noble], y visor 3D del orbital del último electrón o del átomo completo. Archivo único autocontenido. |
 | [`orbitales.html`](orbitales.html) | **Gases nobles por pestañas** (He…Og): nube 3D del átomo, **campo de densidad** 2D (mapa de \|ψ\|² con contornos y escala en pm) y **distribución radial** P(r). Escala didáctica (capas en anillos) o real (Slater), control de giro, "pelar la cebolla" por capas y galería de orbitales del periodo. Usa los módulos de `js/`. |
 | [`espectro.html`](espectro.html) | **Espectro de emisión**: líneas espectrales reales del átomo neutro (NIST ASD, 250–1050 nm) sobre el arcoíris del visible, diagrama de niveles tipo Grotrian agrupado por tipo de orbital, y **simulación de excitación/emisión**: se excita un electrón externo y se anima la cascada de fotones emitidos (ΔE = hc/λ). Pestañas He…Og; Og no tiene datos (átomo de vida ~1 ms, espectro solo predicho). |
+| [`fusion.html`](fusion.html) | **Fusión nuclear (cadena pp)**: plasma 2D del núcleo solar con p⁺, d, ³He y ⁴He. Las reacciones `p+p→d`, `d+p→³He` y `³He+³He→⁴He` ocurren con probabilidades ∝ exp(−τ·T^−⅓) (ventana de Gamow, cualitativa). Control de temperatura (0.3–5 keV ≈ 3–58 MK), contadores de ⁴He y energía liberada, equivalencia E=mc² y registro de eventos. |
 
-Las tres comparten la misma física: soluciones exactas del hidrógeno, regla de Madelung (*n + l*) y los mismos colores de orbital (s rojo, p amarillo, d azul, f verde); cada una enfatiza una forma distinta de ver el mismo fenómeno.
+Las cuatro comparten la misma física: soluciones exactas del hidrógeno, regla de Madelung (*n + l*) y los mismos colores de orbital (s rojo, p amarillo, d azul, f verde); cada una enfatiza una forma distinta de ver el mismo fenómeno. `fusion.html` amplía el proyecto del átomo al núcleo.
 
 ## orbitales.html en detalle
 
@@ -39,6 +40,7 @@ Las tres comparten la misma física: soluciones exactas del hidrógeno, regla de
 - **Llenado:** regla de Madelung (*n + l*). Cada periodo empieza con *ns* y termina con *np*; después de cada p viene un salto de energía que cierra la fila.
 - **Cargos nucleares efectivos:** reglas de Slater (solo en `orbitales.html`, escala "real").
 - **Espectros:** líneas del átomo neutro tomadas de la base NIST Atomic Spectra Database (Kramida et al., ASD v5.12, DOI 10.18434/T4W30F); energías de nivel en cm⁻¹, ΔE = hc/λ. La excitación/emisión se simula con un modelo simplificado: la cascada sigue la transición más intensa disponible desde cada nivel, sin probabilidades de Einstein ni ensanchamiento.
+- **Fusión:** cadena pp con energías Q reales (1.44 / 5.49 / 12.86 MeV → 26.73 MeV netos por ⁴He, Δm = 0.0287 u). El positrón se aniquila (~1.02 MeV extra) y el neutrino escapa sin interactuar. Las tasas de reacción son **cualitativas** (forma de Gamow exp(−τ·T^−⅓) calibrada para visualización): la tasa real depende también de densidad y del factor S nuclear; la física de 2 cuerpos y la conservación del momento sí se respetan.
 - **Limitaciones:** sin efectos relativistas (importantes en Rn y Og) ni correlación; el orden de llenado es el ideal (Cr, Cu, La… se exceptúan). Oganesón no tiene espectro medido (solo predicciones teóricas); radón tiene pocas líneas confirmadas.
 
 ## Estructura
@@ -46,7 +48,8 @@ Las tres comparten la misma física: soluciones exactas del hidrógeno, regla de
 ```
 index.html        llenado electrónico — autocontenido
 orbitales.html    gases nobles — pestañas + 3 vistas
-espectro.html     espectro de emisión + diagrama de niveles + simulación
+ezpectro.html     espectro de emisión + diagrama de niveles + simulación
+fusion.html       cadena pp — plasma, fusiones y balance E=mc²
 css/style.css     estilos de orbitales.html y espectro.html
 js/physics.js     orbitales, configuraciones, Slater, muestreo (también corre en Node)
 js/viewer.js      visor 3D en canvas 2D
@@ -55,9 +58,11 @@ js/app.js         lógica de la interfaz de orbitales.html
 js/specdata.js    líneas espectrales NIST por gas noble
 js/espectro.js    espectro, diagrama de niveles y cascada de emisión
                     (funciones puras exportadas para pruebas en Node)
+js/fusion.js      cadena pp: plasma, fusiones, balance de energía
+                    (funciones puras exportadas para pruebas en Node)
 tests/check.js    pruebas de la física: node tests/check.js
 ```
 
 ## Publicar en la web
 
-En GitHub: *Settings → Pages → Deploy from branch → main / root*. Queda en `https://alrobles.github.io/atomic-simulation/` (y `…/orbitales.html`, `…/espectro.html`).
+En GitHub: *Settings → Pages → Deploy from branch → main / root*. Queda en `https://alrobles.github.io/atomic-simulation/` (y `…/orbitales.html`, `…/espectro.html`, `…/fusion.html`).
