@@ -1,0 +1,18 @@
+{
+  "name": "atomic-simulation",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Simulaciones didácticas interactivas del átomo y del cielo (HTML + JavaScript, sin dependencias ni build). Las vistas están listadas en el README.",
+  "scripts": {
+    "test": "node tests/check.js",
+    "serve": "python3 -m http.server 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alrobles/atomic-simulation.git"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

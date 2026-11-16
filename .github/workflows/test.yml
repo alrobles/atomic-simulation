@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Sintaxis de todos los módulos (incluidos los que solo corren en el navegador:
+      # physics.js, viewer.js, field.js, app.js, estrella.js… no se requieren en las pruebas)
+      - name: Comprobar sintaxis
+        run: for f in js/*.js tests/*.js; do node --check "$f"; done
+
+      # Física y datos: configuraciones, Slater, integrales de P(r), líneas NIST, cascada, cadena pp
+      - name: Pruebas de física
+        run: npm test
