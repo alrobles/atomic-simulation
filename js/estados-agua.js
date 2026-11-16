@@ -204,16 +204,27 @@ function reset(nextPhase = phase) {
   updateStats();
 }
 
-function alignmentDerivative(theta, phi) {
-  return donorAlignment(theta, phi);
+// Términos de alineación de una molécula hacia la dirección unidad (ux,uy).
+// Equivale a donorAlignment(theta, atan2(uy,ux)): cos(φ−α)=u·d, sin(φ−α)=u×d.
+// Los ejes O→H (d1, d2) se precalculan una vez por substep en computeForces.
+const _hb = { s: 0, d: 0 };
+function hbTerms(m, ux, uy, out) {
+  let sum = 0, der = 0;
+  let c = ux * m.d1x + uy * m.d1y;
+  if (c > 0) { const q = c * c; sum += q * q; der += 4 * q * c * (uy * m.d1x - ux * m.d1y); }
+  c = ux * m.d2x + uy * m.d2y;
+  if (c > 0) { const q = c * c; sum += q * q; der += 4 * q * c * (uy * m.d2x - ux * m.d2y); }
+  out.s = sum; out.d = der;
 }
 
 function addPairForce(a, b) {
   const dx = b.x - a.x, dy = b.y - a.y;
   const r2 = dx * dx + dy * dy;
   if (r2 >= CUTOFF * CUTOFF) return;
-  const r = Math.max(0.72, Math.sqrt(r2));
-  const phi = Math.atan2(dy, dx);
+  const ru = Math.sqrt(r2);
+  const r = Math.max(0.72, ru);
+  const ux = ru > 1e-9 ? dx / ru : 1;
+  const uy = ru > 1e-9 ? dy / ru : 0;
 
   // Short-range isotropic repulsion/dispersion between oxygen sites.
   const sr6 = Math.pow(SIGMA / r, 6);
@@ -222,9 +233,8 @@ function addPairForce(a, b) {
   // Effective directional attraction when an O-H axis points at a neighbor.
   let Ai = 0, Aj = 0, dAi = 0, dAj = 0;
   if (r < 1.8) {
-    const ai = alignmentDerivative(a.theta, phi);
-    const aj = alignmentDerivative(b.theta, phi + Math.PI);
-    Ai = ai.sum; Aj = aj.sum; dAi = ai.deriv; dAj = aj.deriv;
+    hbTerms(a, ux, uy, _hb); Ai = _hb.s; dAi = _hb.d;
+    hbTerms(b, -ux, -uy, _hb); Aj = _hb.s; dAj = _hb.d;
     const dr = r - HB_R0;
     const g = Math.exp(-0.5 * (dr / HB_WIDTH) ** 2);
     const orient = Ai + Aj;
@@ -240,12 +250,16 @@ function addPairForce(a, b) {
 }
 
 function computeForces() {
-  for (const m of molecules) { m.fx = 0; m.fy = 0; m.torque = 0; }
   bonds = [];
   const cells = new Map();
-  const key = (x, y) => `${x},${y}`;
+  const key = (x, y) => (x + 512) * 2048 + (y + 512);
   for (let i = 0; i < molecules.length; i++) {
-    const m = molecules[i], cx = Math.floor(m.x / CUTOFF), cy = Math.floor(m.y / CUTOFF);
+    const m = molecules[i];
+    m.fx = 0; m.fy = 0; m.torque = 0;
+    const a1 = m.theta - HALF_ANGLE, a2 = m.theta + HALF_ANGLE;
+    m.d1x = Math.cos(a1); m.d1y = Math.sin(a1);
+    m.d2x = Math.cos(a2); m.d2y = Math.sin(a2);
+    const cx = Math.floor(m.x / CUTOFF), cy = Math.floor(m.y / CUTOFF);
     const k = key(cx, cy);
     if (!cells.has(k)) cells.set(k, []);
     cells.get(k).push(i);
@@ -304,6 +318,21 @@ function actualTemperature() {
   return 2 * k / Math.max(1, 3 * molecules.length - 2);
 }
 
+let O_GLOW = null;
+function glowSprite() {
+  if (O_GLOW) return O_GLOW;
+  const s = 64;
+  O_GLOW = document.createElement("canvas");
+  O_GLOW.width = O_GLOW.height = s;
+  const g = O_GLOW.getContext("2d");
+  const gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  gr.addColorStop(0, "rgba(248,81,73,0.5)");
+  gr.addColorStop(0.45, "rgba(248,81,73,0.16)");
+  gr.addColorStop(1, "rgba(248,81,73,0)");
+  g.fillStyle = gr; g.fillRect(0, 0, s, s);
+  return O_GLOW;
+}
+
 function drawMolecule(m) {
   const ox = box.x * unit + (W - box.w * unit) / 2;
   const oy = box.y * unit + (H - box.h * unit) / 2;
@@ -313,19 +342,24 @@ function drawMolecule(m) {
   const h2 = [x + BOND * mu * Math.cos(m.theta + HALF_ANGLE), y + BOND * mu * Math.sin(m.theta + HALF_ANGLE)];
   ctx.strokeStyle = "rgba(201,209,217,0.62)"; ctx.lineWidth = Math.max(1.3, mu * 0.05);
   ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(h1[0], h1[1]); ctx.moveTo(x, y); ctx.lineTo(h2[0], h2[1]); ctx.stroke();
-  ctx.fillStyle = COLORS.O; ctx.shadowColor = COLORS.O; ctx.shadowBlur = 6;
-  ctx.beginPath(); ctx.arc(x, y, Math.max(3.4, mu * 0.13), 0, Math.PI * 2); ctx.fill();
-  ctx.shadowBlur = 0;
+  const rO = Math.max(3.4, mu * 0.13);
+  ctx.drawImage(glowSprite(), x - rO * 3, y - rO * 3, rO * 6, rO * 6);
+  ctx.fillStyle = COLORS.O;
+  ctx.beginPath(); ctx.arc(x, y, rO, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = COLORS.H;
   for (const h of [h1, h2]) { ctx.beginPath(); ctx.arc(h[0], h[1], Math.max(2.0, mu * 0.073), 0, Math.PI * 2); ctx.fill(); }
 }
 
+let bgGlow = null, bgGlowW = 0, bgGlowH = 0;
 function draw() {
   if (!fit()) return;
   ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, W, H);
-  const glow = ctx.createRadialGradient(W * 0.5, H * 0.48, 5, W * 0.5, H * 0.48, Math.max(W, H) * 0.7);
-  glow.addColorStop(0, "rgba(24,55,77,0.22)"); glow.addColorStop(1, "rgba(13,17,23,0)");
-  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  if (!bgGlow || bgGlowW !== W || bgGlowH !== H) {
+    bgGlow = ctx.createRadialGradient(W * 0.5, H * 0.48, 5, W * 0.5, H * 0.48, Math.max(W, H) * 0.7);
+    bgGlow.addColorStop(0, "rgba(24,55,77,0.22)"); bgGlow.addColorStop(1, "rgba(13,17,23,0)");
+    bgGlowW = W; bgGlowH = H;
+  }
+  ctx.fillStyle = bgGlow; ctx.fillRect(0, 0, W, H);
   const bx = (W - box.w * unit) / 2, by = (H - box.h * unit) / 2;
   ctx.strokeStyle = "rgba(139,148,158,0.44)"; ctx.lineWidth = 1.2; ctx.setLineDash([5, 5]);
   ctx.strokeRect(bx, by, box.w * unit, box.h * unit); ctx.setLineDash([]);
