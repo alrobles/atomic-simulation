@@ -8,15 +8,17 @@
   const state = { k: 0, view: "cloud", scale: "didactic", highlight: true, slice: true, qty: "P", contours: true, visible: new Set(), orbital: null };
   const mainV = new Viewer($("main"), { fill: 0.38, spin: 0.0012 });
 
-  // márgenes libres para las gráficas (debajo del texto de info y arriba del panel)
-  const margins = (H) => ({ top: Math.min(H * 0.35, $("info").offsetHeight + 22), bottom: $("panel").offsetHeight + 24 });
+  // márgenes libres para las gráficas (debajo del texto de info)
+  const margins = (H) => ({ top: Math.min(H * 0.35, $("info").offsetHeight + 22), bottom: 24 });
   const fieldV = new FieldView($("field"), (W, H) => {
-    const m = margins(H), size = Math.max(120, Math.min(W - 150, H - m.top - m.bottom));
-    return { x: (W - size) / 2 - 30, y: m.top + (H - m.top - m.bottom - size) / 2, size };
+    const m = margins(H), panelW = $("panel").offsetWidth || 340;
+    const availW = Math.max(120, W - panelW - 40);
+    const size = Math.max(120, Math.min(availW, H - m.top - m.bottom));
+    return { x: 40 + Math.max(0, (availW - size) / 2), y: m.top + Math.max(0, (H - m.top - m.bottom - size) / 2), size };
   });
   const radialP = new RadialPlot($("radial"), (W, H) => {
-    const m = margins(H);
-    return { x: 60, y: m.top + 10, w: W - 90, h: Math.max(100, H - m.top - m.bottom - 40) };
+    const m = margins(H), panelW = $("panel").offsetWidth || 340;
+    return { x: 60, y: m.top + 10, w: Math.max(140, W - panelW - 90), h: Math.max(100, H - m.top - m.bottom - 40) };
   });
 
   // ---------- Pestañas ----------
@@ -136,9 +138,11 @@
 
     if (state.view === "cloud") {
       mainV.slice = state.slice ? 0.06 : 0;
-      mainV.setCloud(A.genAtom(state.k, { scale: state.scale, visible: state.visible, highlightNew: state.highlight, points: state.slice ? 160000 : 40000 }));
+      // isNobleIndex: physics.js pasó a interpretar el número como Z (soporte de los 118
+      // elementos); esta vista sigue hablando de índices de gas noble (0 = He … 6 = Og).
+      mainV.setCloud(A.genAtom(state.k, { isNobleIndex: true, scale: state.scale, visible: state.visible, highlightNew: state.highlight, points: state.slice ? 160000 : 40000 }));
     } else if (state.view === "field") {
-      const shells = A.atomShells(state.k, state.visible);
+      const shells = A.atomShells(state.k, state.visible, { isNobleIndex: true });
       const maxR = Math.max(...shells.map(s => s.rmax), 5);
       fieldV.show({
         key: `atom_${state.k}_${state.scale}_${state.qty}_${Array.from(state.visible).join("-")}`,
@@ -150,7 +154,7 @@
         contours: state.contours
       });
     } else if (state.view === "radial") {
-      const shells = A.atomShells(state.k, state.visible);
+      const shells = A.atomShells(state.k, state.visible, { isNobleIndex: true });
       const maxR = Math.max(...shells.map(s => s.rmax), 5);
       radialP.show({
         curves: shells.map(s => ({

@@ -28,9 +28,41 @@
     { Z: 118, sym: "Og", name: "Oganesón" },
   ];
 
+  const SYM = "H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og".split(" ");
+  const NAMES = ["Hidrógeno","Helio","Litio","Berilio","Boro","Carbono","Nitrógeno","Oxígeno","Flúor","Neón","Sodio","Magnesio","Aluminio","Silicio","Fósforo","Azufre","Cloro","Argón","Potasio","Calcio","Escandio","Titanio","Vanadio","Cromo","Manganeso","Hierro","Cobalto","Níquel","Cobre","Zinc","Galio","Germanio","Arsénico","Selenio","Bromo","Kriptón","Rubidio","Estroncio","Itrio","Circonio","Niobio","Molibdeno","Tecnecio","Rutenio","Rodio","Paladio","Plata","Cadmio","Indio","Estaño","Antimonio","Telurio","Yodo","Xenón","Cesio","Bario","Lantano","Cerio","Praseodimio","Neodimio","Prometio","Samario","Europio","Gadolinio","Terbio","Disprosio","Holmio","Erbio","Tulio","Iterbio","Lutecio","Hafnio","Tántalo","Wolframio","Renio","Osmio","Iridio","Platino","Oro","Mercurio","Talio","Plomo","Bismuto","Polonio","Ástato","Radón","Francio","Radio","Actinio","Torio","Protactinio","Uranio","Neptunio","Plutonio","Americio","Curio","Berkelio","Californio","Einstenio","Fermio","Mendelevio","Nobelio","Laurencio","Rutherfordio","Dubnio","Seaborgio","Bohrio","Hassio","Meitnerio","Darmstatio","Roentgenio","Copernicio","Nihonio","Flerovio","Moscovio","Livermorio","Tenesino","Oganesón"];
+
+  const ELEMENTS = SYM.map((sym, i) => ({
+    Z: i + 1,
+    sym,
+    name: NAMES[i],
+    isNoble: [2, 10, 18, 36, 54, 86, 118].includes(i + 1),
+  }));
+
+  const SUBS = [];
+  {
+    let c = 0;
+    PERIODS.forEach((row, pi) => {
+      row.forEach((lab) => {
+        const n = +lab[0], l = LCH.indexOf(lab[1]), cap = 2 * (2 * l + 1);
+        SUBS.push({ lab, n, l, norb: 2 * l + 1, cap, start: c, period: pi });
+        c += cap;
+      });
+    });
+  }
+
   function subshell(lab, period) {
     const n = +lab[0], l = LCH.indexOf(lab[1]);
     return { lab, n, l, norb: 2 * l + 1, cap: 2 * (2 * l + 1), period };
+  }
+
+  /** Configuración electrónica de cualquier elemento Z (1..118). */
+  function elementConfig(Z) {
+    const out = [];
+    for (const s of SUBS) {
+      const occ = Math.max(0, Math.min(s.cap, Z - s.start));
+      if (occ > 0) out.push({ ...s, occ, full: occ === s.cap });
+    }
+    return out;
   }
 
   /** Configuración completa del gas noble k (0 = He … 6 = Og). */
@@ -147,7 +179,11 @@
   function zeff(Z, config, sub) {
     const g = sgroup(sub), gi = SLATER_ORDER.indexOf(g);
     const count = {};
-    config.forEach((s) => { const h = sgroup(s); count[h] = (count[h] || 0) + s.cap; });
+    config.forEach((s) => {
+      const h = sgroup(s);
+      const occ = s.occ !== undefined ? s.occ : s.cap;
+      count[h] = (count[h] || 0) + occ;
+    });
     let S = 0;
     for (const h in count) {
       const e = count[h], hi = SLATER_ORDER.indexOf(h);
@@ -159,7 +195,7 @@
         } else S += e;
       }
     }
-    return Z - S;
+    return Math.max(0.5, Z - S);
   }
 
   // ---------- Nubes de puntos ----------
@@ -184,38 +220,41 @@
   }
 
   /**
-   * Átomo completo del gas noble k.
-   * opts.scale: "didactic" (radio ∝ n) | "real" (hidrogenoide con Z_ef de Slater)
-   * opts.visible: Set de etiquetas de subcapa visibles
-   * opts.highlightNew: atenúa el "carozo" del gas noble anterior
+   * Átomo completo para cualquier elemento Z (1..118) o índice de gas noble k.
    */
-  function genAtom(k, opts) {
+  function genAtom(kOrZ, opts) {
     opts = opts || {};
-    const Z = NOBLES[k].Z, config = nobleConfig(k);
+    const isGasIndex = typeof kOrZ === "number" && kOrZ >= 0 && kOrZ <= 6 && opts.isNobleIndex;
+    const Z = isGasIndex ? NOBLES[kOrZ].Z : kOrZ;
+    const config = elementConfig(Z);
     const visible = opts.visible || new Set(config.map((s) => s.lab));
     const total = opts.points || 40000;
-    const per = Math.max(140, Math.floor(total / Z));
+    const per = Math.max(120, Math.floor(total / Math.max(1, Z)));
     const vis = config.filter((s) => visible.has(s.lab));
     const real = opts.scale === "real";
     const nmax = Math.max(...vis.map((s) => s.n), 1);
     let maxR = 0;
     if (real) vis.forEach((s) => { maxR = Math.max(maxR, radial(s.n, s.l).r99 / zeff(Z, config, s)); });
+    let coreZ = 0;
+    for (const nz of [2, 10, 18, 36, 54, 86, 118]) { if (nz < Z) coreZ = nz; }
+
     const groups = [];
     vis.forEach((s) => {
-      const core = opts.highlightNew && s.period < k;
-      const g = makeGroup(core ? "#8b949e" : LCOLOR[s.l], core ? 0.14 : 0.42, s.cap * per);
+      const isCore = opts.highlightNew && s.start + (s.occ || s.cap) <= coreZ;
+      const occ = s.occ !== undefined ? s.occ : s.cap;
+      const g = makeGroup(isCore ? "#8b949e" : LCOLOR[s.l], isCore ? 0.14 : 0.42, occ * per);
       const rad = radial(s.n, s.l), f = real ? 1 / zeff(Z, config, s) / maxR : 0;
-      for (let i = 0; i < s.norb; i++)
-        for (let e = 0; e < 2 * per; e++) {
-          // didáctica: la capa n ocupa su propio anillo [n−0.92, n−0.08], densidad uniforme en volumen
+      for (let i = 0; i < s.norb; i++) {
+        const occOrb = (occ > i ? 1 : 0) + (occ > s.norb + i ? 1 : 0);
+        for (let e = 0; e < occOrb * per; e++) {
           const a = s.n - 0.92, b = s.n - 0.08;
           const rr = real ? sampleR(rad)[0] * f : Math.cbrt(a * a * a + Math.random() * (b * b * b - a * a * a)) / nmax;
           const [d] = sampleDir(s.l, i);
           push(g, d[0] * rr, d[1] * rr, d[2] * rr);
         }
+      }
       groups.push(g);
     });
-    // dibuja primero el carozo (gris) y luego lo nuevo encima
     groups.sort((a, b) => a.alpha - b.alpha);
     return groups;
   }
@@ -223,19 +262,21 @@
   const sup = (s) => String(s).split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("");
 
   // ---------- Densidades (campo y distribución radial) ----------
-  /**
-   * Subcapas del gas noble k con su densidad, usando orbitales hidrogenoides con Z_ef (Slater).
-   * P(r) = 4πr²ρ(r): electrones por unidad de radio (∫P dr = electrones de la subcapa).
-   * Una subcapa llena es esféricamente simétrica (teorema de Unsöld), así que ρ solo depende de r.
-   */
-  function atomShells(k, visible) {
-    const Z = NOBLES[k].Z, config = nobleConfig(k);
+  function atomShells(kOrZ, visible, opts) {
+    opts = opts || {};
+    const isGasIndex = typeof kOrZ === "number" && kOrZ >= 0 && kOrZ <= 6 && opts.isNobleIndex;
+    const Z = isGasIndex ? NOBLES[kOrZ].Z : kOrZ;
+    const config = elementConfig(Z);
+    let coreZ = 0;
+    for (const nz of [2, 10, 18, 36, 54, 86, 118]) { if (nz < Z) coreZ = nz; }
+
     return config
       .filter((s) => !visible || visible.has(s.lab))
       .map((s) => {
-        const z = zeff(Z, config, s), rad = radial(s.n, s.l), c = s.cap * z * z * z * rad.norm2;
+        const occ = s.occ !== undefined ? s.occ : s.cap;
+        const z = zeff(Z, config, s), rad = radial(s.n, s.l), c = occ * z * z * z * rad.norm2;
         return {
-          s, z, core: s.period < k, rmax: rad.r99 / z,
+          s, z, occ, core: s.start + occ <= coreZ, rmax: rad.r99 / z,
           P: (r) => { const R = Rnl(s.n, s.l, z * r); return c * r * r * R * R; },
           rho: (r) => { const R = Rnl(s.n, s.l, z * r); return (c * R * R) / (4 * Math.PI); },
         };
@@ -270,6 +311,7 @@
     }
     return best;
   }
+
   function configString(k, short) {
     const conf = nobleConfig(k);
     if (short && k > 0) {
@@ -278,9 +320,24 @@
     return conf.map((s) => s.lab + sup(s.cap)).join(" ");
   }
 
+  const NOBLE_MAP = { 2: "He", 10: "Ne", 18: "Ar", 36: "Kr", 54: "Xe", 86: "Rn", 118: "Og" };
+
+  function elementConfigString(Z, short) {
+    const conf = elementConfig(Z);
+    let coreZ = 0;
+    for (const nz of [2, 10, 18, 36, 54, 86, 118]) { if (nz < Z) coreZ = nz; }
+    if (short && coreZ > 0) {
+      const valence = conf.filter((s) => s.start >= coreZ);
+      return `[${NOBLE_MAP[coreZ]}] ` + valence.map((s) => s.lab + sup(s.occ)).join(" ");
+    }
+    return conf.map((s) => s.lab + sup(s.occ)).join(" ");
+  }
+
   const Atom = {
     LCH, LCOLOR, PERIODS, NOBLES, ANG, ANGNAME,
-    subshell, nobleConfig, configString, zeff, radial, Rnl, laguerre,
+    SYM, NAMES, ELEMENTS, SUBS,
+    subshell, nobleConfig, elementConfig, configString, elementConfigString,
+    zeff, radial, Rnl, laguerre,
     sampleDir, sampleR, genOrbital, genAtom, sup,
     atomShells, psi, orbitalP, bestPlane,
   };
