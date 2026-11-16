@@ -72,7 +72,7 @@ function fit() {
 }
 
 function setBox() {
-  const n = molecules.length || particleTarget;
+  const n = particleTarget;
   const density = phase === "gas" ? 0.30 : phase === "liquid" ? 0.52 : 0.62;
   const aspect = phase === "gas" ? 1.22 : 0.82;
   const maxArea = Math.max(1, ((W - 40) / unit) * ((H - 40) / unit));
@@ -102,8 +102,8 @@ function initializePositions() {
     const nx = Math.max(4, Math.ceil(Math.sqrt(particleTarget * box.w / Math.max(1, box.h))));
     const ny = Math.ceil(particleTarget / nx), spacing = Math.min(1.15, Math.max(0.88, Math.sqrt((box.w * box.h) / particleTarget)));
     const gridW = (nx - 1) * spacing, gridH = (ny - 1) * spacing * 0.88;
-    for (let row = 0; row < ny; row++) {
-      for (let col = 0; col < nx; col++) {
+    for (let row = 0; row < ny && molecules.length < particleTarget; row++) {
+      for (let col = 0; col < nx && molecules.length < particleTarget; col++) {
         const x = box.x + box.w / 2 - gridW / 2 + col * spacing + (row % 2) * spacing / 2;
         const y = box.y + box.h / 2 - gridH / 2 + row * spacing * 0.88;
         molecules.push(newMolecule(x, y, (row + col) % 2 ? 0 : Math.PI, 0.16));
@@ -146,11 +146,14 @@ function resizeParticles(next) {
   updateStats();
 }
 
+function autoCount() {
+  const area = Math.max(1, W * H);
+  return Math.max(MIN_PARTICLES, Math.min(MAX_PARTICLES, Math.round(area / 2600)));
+}
+
 function chooseParticleCount(mode) {
   if (mode === "auto") {
-    const area = Math.max(1, W * H);
-    const base = Math.round(area / 2600);
-    particleTarget = Math.max(MIN_PARTICLES, Math.min(MAX_PARTICLES, base));
+    particleTarget = autoCount();
     manualCount = 0;
   } else {
     manualCount = Math.max(MIN_PARTICLES, Math.min(MAX_PARTICLES, +mode || DEFAULT_PARTICLES));
@@ -177,12 +180,12 @@ function adaptParticles(dtMs) {
   lastAdapt = now;
   const avg = fpsWindow.reduce((a, b) => a + b, 0) / fpsWindow.length;
   if (manualCount) return;
-  if (avg > 24 && particleTarget < MAX_PARTICLES) {
-    resizeParticles(Math.min(MAX_PARTICLES, particleTarget + Math.max(6, Math.round(particleTarget * 0.08))));
-  } else if (avg > 34 && particleTarget < MAX_PARTICLES) {
-    resizeParticles(Math.min(MAX_PARTICLES, particleTarget + Math.max(4, Math.round(particleTarget * 0.05))));
-  } else if (avg < 13 && particleTarget > MIN_PARTICLES) {
+  if (avg > 30 && particleTarget > MIN_PARTICLES) {
     resizeParticles(Math.max(MIN_PARTICLES, particleTarget - Math.max(6, Math.round(particleTarget * 0.10))));
+  } else if (avg > 22 && particleTarget > MIN_PARTICLES) {
+    resizeParticles(Math.max(MIN_PARTICLES, particleTarget - Math.max(4, Math.round(particleTarget * 0.06))));
+  } else if (avg < 12 && particleTarget < MAX_PARTICLES) {
+    resizeParticles(Math.min(MAX_PARTICLES, particleTarget + Math.max(4, Math.round(particleTarget * 0.05))));
   }
 }
 
@@ -194,7 +197,7 @@ function reset(nextPhase = phase) {
   $("tempRead").textContent = targetT.toFixed(2);
   document.querySelectorAll("#phases button").forEach(b => b.classList.toggle("on", b.dataset.phase === phase));
   if (!fit()) { requestAnimationFrame(() => reset(nextPhase)); return; }
-  particleTarget = manualCount || particleTarget;
+  particleTarget = manualCount || autoCount();
   setBox();
   prng = 90210 + Math.round(targetT * 1000);
   initializePositions();
