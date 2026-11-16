@@ -357,5 +357,89 @@ console.log("\n── 12. Interacciones reducidas entre moléculas de agua ─�
     "los preajustes tienen temperatura reducida creciente: sólido < líquido < gas");
 }
 
+console.log("\n── 13. Propiedades periódicas y efectos relativistas (Z > 70) ──");
+{
+  ok(A.IE1.length === 118 && A.PAULING_EN.length === 118, "IE1 y PAULING_EN cubren los 118 elementos");
+  ok(A.IE1[1] > A.IE1[2], `He (${A.IE1[1]} eV) tiene mayor IE₁ que Li (${A.IE1[2]} eV)`);
+  ok(A.slaterRadius(19).rAngstrom > A.slaterRadius(1).rAngstrom, "radio de Slater crece de H a K");
+  ok(A.relFactor(26, 0) === 1 && A.relFactor(79, 0) < 0.9 && A.relFactor(79, 2) > 1.05,
+    "efectos relativistas: sin cambio para Z≤70, contracción s y expansión d en Au (Z=79)");
+}
+
+console.log("\n── 14. Efecto Zeeman en espectro.js ──");
+{
+  const z0 = E.zeemanSplit(585.25, 0, 1.0);
+  const z2 = E.zeemanSplit(585.25, 2.0, 1.0);
+  ok(z0.dE_eV === 0 && z0.dLam_nm === 0, "sin campo B=0 no hay desdoblamiento");
+  ok(z2.components.length === 3 && z2.components[0].lam < 585.25 && z2.components[2].lam > 585.25,
+    `B=2 T desdobla 585.25 nm en triplete (±${(z2.dLam_nm * 1000).toFixed(1)} pm)`);
+}
+
+console.log("\n── 15. Hibridación y orbitales moleculares LCAO-MO ──");
+{
+  const Chem = require("../js/chemistry.js");
+  // Ortogonalidad de los coeficientes de sp3, sp3d y sp3d2
+  const dot = (a, b) => {
+    let s = 0;
+    for (const [n1, l1, i1, c1] of a.terms)
+      for (const [n2, l2, i2, c2] of b.terms)
+        if (n1 === n2 && l1 === l2 && i1 === i2) s += c1 * c2;
+    return s;
+  };
+  for (const key of ["sp", "sp2", "sp3", "sp3d", "sp3d2"]) {
+    const lobes = Chem.HYBRIDS[key].lobes;
+    let ortho = true;
+    for (let i = 0; i < lobes.length; i++) {
+      if (!near(dot(lobes[i], lobes[i]), 1, 1e-9)) ortho = false;
+      for (let j = i + 1; j < lobes.length; j++) {
+        if (!near(dot(lobes[i], lobes[j]), 0, 1e-9)) ortho = false;
+      }
+    }
+    ok(ortho, `hibridación ${key} es ortonormal (${lobes.length} lóbulos)`);
+  }
+  ok(near(Chem.moOverlap(0), 1, 1e-12) && Chem.moOverlap(2.5) > 0.4, "solapamiento S(0)=1 y S(2.5)>0.4");
+  ok(Chem.moEnergy(2.5).dE_bond < 0 && Chem.moEnergy(2.5).dE_anti > 0, "σ₁ₛ es enlazante (ΔE<0) y σ₁ₛ* antienlazante (ΔE>0)");
+  ok(near(Chem.evalMO("anti", 2.5, 0.7, -0.4, 0), 0, 1e-12), "σ₁ₛ* tiene plano nodal exacto en z = 0");
+}
+
+console.log("\n── 16. Superposición temporal Ψ(r, t) ──");
+{
+  const Sup = require("../js/superposicion.js");
+  const d0 = Sup.superpositionDensity(1, 1, Math.SQRT1_2, Math.SQRT1_2, 0);
+  const dpi = Sup.superpositionDensity(1, 1, Math.SQRT1_2, Math.SQRT1_2, Math.PI);
+  ok(near(d0, 2, 1e-9) && near(dpi, 0, 1e-9), "interferencia constructiva en fase 0 y destructiva en fase π");
+  ok(near(Sup.bohrEnergyEv(2) - Sup.bohrEnergyEv(1), 10.204, 0.01), "transición 1s↔2p tiene ΔE ≈ 10.20 eV");
+}
+
+console.log("\n── 17. Historia de modelos y simulador Dirac 2P ──");
+{
+  const D = require("../js/dirac.js");
+  ok(D.MODELS.length === 10 && D.MODELS[7].kind === "dirac" && D.MODELS[9].kind === "sm",
+    "línea del tiempo cubre 10 hitos desde Thomson (1904) hasta el Modelo Estándar");
+  const sim = new D.Dirac2P(32, 12.0);
+  sim.initScenario({ symmetry: "anti", coupling: 1.5, c: 1.2 });
+  const n0 = sim.norm();
+  for (let s = 0; s < 5; s++) sim.step(0.03);
+  const n1 = sim.norm();
+  ok(near(n0, 1, 1e-10) && near(n1, 1, 1e-10),
+    `evolución Split-Step FFT conserva la norma (${n0.toFixed(6)} → ${n1.toFixed(6)})`);
+  const { rho } = sim.density();
+  let sameSpinDiag = 0, exchErr = 0;
+  for (let i = 0; i < sim.N; i++) {
+    const idx = i * sim.N + i;
+    sameSpinDiag = Math.max(sameSpinDiag,
+      sim.re[0][idx] ** 2 + sim.im[0][idx] ** 2,
+      sim.re[3][idx] ** 2 + sim.im[3][idx] ** 2);
+    for (let j = 0; j < sim.N; j++) {
+      const a = i * sim.N + j, b = j * sim.N + i;
+      exchErr = Math.max(exchErr,
+        Math.abs(sim.re[1][a] + sim.re[2][b]),
+        Math.abs(sim.im[1][a] + sim.im[2][b]));
+    }
+  }
+  ok(sameSpinDiag < 1e-12 && exchErr < 1e-12,
+    "fermiones conservan antisimetría de intercambio Ψ_{ab}(x₁,x₂) = −Ψ_{ba}(x₂,x₁) y cero en diagonal mismo espín");
+}
+
 console.log(fail ? `\n${fail} prueba(s) fallaron\n` : "\ntodas las pruebas pasaron\n");
 process.exit(fail ? 1 : 0);
