@@ -98,6 +98,29 @@ function buildCascade(lines, maxSteps) {
 function sup(s) { return String(s).split("").map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+c] || c).join(""); }
 function termLabel(orb, term) { return `${orb} ${sup(term || "")}`.trim(); }
 
+const MU_B_EV_T = 5.7883818e-5; // magnetón de Bohr en eV/T
+const HC_EV_NM = 1239.84193;   // hc en eV·nm
+
+/**
+ * Desdoblamiento Zeeman de una línea espectral λ (nm) bajo campo magnético B (T).
+ * Devuelve el desplazamiento físico ΔE, Δλ y las 3 componentes (σ⁻, π, σ⁺).
+ */
+function zeemanSplit(lamNm, B, gEff) {
+  gEff = gEff || 1.0;
+  const dE_eV = gEff * MU_B_EV_T * Math.max(0, B);
+  const dLam_nm = (lamNm * lamNm / HC_EV_NM) * dE_eV;
+  return {
+    dE_eV,
+    dE_cm: dE_eV * EV2CM,
+    dLam_nm,
+    components: [
+      { dm: -1, lam: lamNm - dLam_nm, relScale: 0.55, label: "σ⁻ (Δm=−1)" },
+      { dm: 0,  lam: lamNm,           relScale: 0.85, label: "π (Δm=0)" },
+      { dm: +1, lam: lamNm + dLam_nm, relScale: 0.55, label: "σ⁺ (Δm=+1)" },
+    ],
+  };
+}
+
 // ---------- navegador ----------
 if (typeof document !== "undefined") (function () {
 
@@ -111,6 +134,15 @@ const levCv = $("levels"), levCtx = levCv.getContext("2d");
 const sim = { on: false, t0: 0, path: [], flashes: [], exciteDur: 850, stepDur: 1250 };
 let selLine = null, hoverLine = null;
 let lastSpec = { W: 0, H: 0 }, lastLev = { W: 0, H: 0 };
+let magB = 0;
+
+if ($("bField")) {
+  $("bField").addEventListener("input", (e) => {
+    magB = +e.target.value;
+    $("bVal").textContent = magB.toFixed(1) + " T";
+    showSel(selLine);
+  });
+}
 
 // ---------- carga de gas ----------
 function loadGas(el) {
@@ -166,10 +198,17 @@ function showSel(L) {
   const box = $("selinfo");
   if (!L) { box.innerHTML = `<span class="note">Pasa el cursor sobre el espectro o haz clic en una línea para ver su transición.</span>`; return; }
   const dE = (L.ek - L.ei) * CM2EV;
+  let zHtml = "";
+  if (magB > 0) {
+    const z = zeemanSplit(L.lam, magB, 1.0);
+    zHtml = `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #30363d;font-size:12px;color:#c9d1d9">
+      <b>Zeeman (B = ${magB.toFixed(1)} T):</b> ΔE = ±${(z.dE_eV * 1e6).toFixed(1)} μeV (±${z.dE_cm.toFixed(2)} cm⁻¹) · Δλ = ±${(z.dLam_nm * 1000).toFixed(2)} pm
+    </div>`;
+  }
   box.innerHTML =
     `<div class="lam" style="color:${rgbCss(wave2rgb(L.lam))}">${L.lam.toFixed(2)} nm</div>` +
     `<div>ΔE = ${dE.toFixed(2)} eV · I<sub>rel</sub> = ${Math.round(L.rel)}</div>` +
-    `<div class="tr">${termLabel(L.uorb, L.uterm)} → ${termLabel(L.lorb, L.lterm)}</div>`;
+    `<div class="tr">${termLabel(L.uorb, L.uterm)} → ${termLabel(L.lorb, L.lterm)}</div>` + zHtml;
 }
 
 // ---------- canvas helpers ----------
@@ -218,10 +257,44 @@ function drawSpec(now) {
     }
     const [r, g, b] = wave2rgb(L.lam);
     const dim = (L.lam < VIS_LO || L.lam > VIS_HI) ? 0.5 : 1;
-    c.fillStyle = `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},${0.9 * dim})`;
-    c.fillRect(x - 0.8, H - h, 1.6, h);
+    if (magB > 0) {
+      // Desdoblamiento visual amplificado (~80x) para distinguir el triplete en la escala completa
+      const z = zeemanSplit(L.lam, magB, 1.0);
+      const visSpreadPx = Math.max(1.2, Math.min(8, (z.dLam_nm * 80 / (LAM_MAX - LAM_MIN)) * W));
+      c.fillStyle = `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},${0.85 * dim})`;
+      c.fillRect(x - 0.7, H - h, 1.4, h);
+      c.fillStyle = `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},${0.55 * dim})`;
+      c.fillRect(x - visSpreadPx - 0.6, H - h * 0.72, 1.2, h * 0.72);
+      c.fillRect(x + visSpreadPx - 0.6, H - h * 0.72, 1.2, h * 0.72);
+    } else {
+      c.fillStyle = `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},${0.9 * dim})`;
+      c.fillRect(x - 0.8, H - h, 1.6, h);
+    }
   }
   drawSpecAxis(c, W, H);
+
+  // Recuadro Zeeman ampliado para la línea activa (hover o seleccionada)
+  const zLine = hoverLine || selLine;
+  if (magB > 0 && zLine && W > 320) {
+    const z = zeemanSplit(zLine.lam, magB, 1.0);
+    const bw = 186, bh = 66, bx = W - bw - 12, by = 18;
+    c.fillStyle = "rgba(22,27,34,0.92)";
+    c.strokeStyle = "#30363d"; c.lineWidth = 1;
+    c.fillRect(bx, by, bw, bh); c.strokeRect(bx, by, bw, bh);
+    c.fillStyle = "#e6edf3"; c.font = "10px sans-serif"; c.textAlign = "left";
+    c.fillText(`Zeeman · ${zLine.lam.toFixed(1)} nm (B=${magB.toFixed(1)} T)`, bx + 8, by + 13);
+    const [r, g, b] = wave2rgb(zLine.lam);
+    const col = rgbCss([r, g, b]);
+    const cx = bx + bw / 2, spread = Math.max(8, (magB / 5) * 46);
+    z.components.forEach((comp) => {
+      const px = cx + comp.dm * spread;
+      const ch = comp.dm === 0 ? 28 : 20;
+      c.fillStyle = col;
+      c.fillRect(px - 1.2, by + bh - 16 - ch, 2.4, ch);
+      c.fillStyle = "#8b949e"; c.textAlign = "center"; c.font = "9px sans-serif";
+      c.fillText(comp.dm === 0 ? "π" : comp.dm < 0 ? "σ⁻" : "σ⁺", px, by + bh - 5);
+    });
+  }
 
   // hover
   if (hoverLine) {
@@ -479,6 +552,6 @@ requestAnimationFrame(frame);
 })();
 
 // export para pruebas en Node
-if (typeof module !== "undefined") module.exports = { wave2rgb, buildLevels, buildCascade, SPEC: SPECd, SPEC_ORDER: ORDERd };
+if (typeof module !== "undefined") module.exports = { wave2rgb, buildLevels, buildCascade, zeemanSplit, SPEC: SPECd, SPEC_ORDER: ORDERd };
 
 })();

@@ -64,7 +64,7 @@
 <header>
   <h1>Espectro de emisión de los gases nobles <span>¿por qué cada uno brilla de un color distinto?</span></h1>
   <nav id="tabs"></nav>
-  <p class="alt"><a href="index.html">← llenado electrónico</a> · <a href="orbitales.html">nubes y orbitales</a> · <a href="fusion.html">fusión nuclear</a> · <a href="estrella.html">vida estelar →</a></p>
+  <p class="alt"><a href="index.html">← portada</a> · <a href="orbitales.html">nubes y orbitales</a> · <a href="orbitales_all.html">tabla periódica</a> · <a href="quimica.html">hibridación y enlace</a> · <a href="superposicion.html">superposición Ψ(r,t)</a> · <a href="fusion.html">fusión nuclear</a> · <a href="estrella.html">vida estelar →</a></p>
 </header>
 
 <main>
@@ -86,6 +86,14 @@
 
       <h2>Simulación</h2>
       <button id="btnSim" class="go">⚡ excitar y emitir</button>
+      <div style="margin-top:10px;padding:8px 10px;background:#161b22;border:1px solid #30363d;border-radius:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span><b>Efecto Zeeman</b> · Campo B⃗</span>
+          <b id="bVal" style="color:#f0c000">0.0 T</b>
+        </div>
+        <input type="range" id="bField" min="0" max="5" step="0.1" value="0" style="width:100%">
+        <div class="note" style="margin-top:4px">ΔE = μ<sub>B</sub> g<sub>J</sub> B Δm<sub>J</sub>. Cada línea se desdobla en un triplete (σ⁻, π, σ⁺).</div>
+      </div>
       <div id="selinfo"><span class="note">Pasa el cursor sobre el espectro o haz clic en una línea para ver su transición.</span></div>
 
       <div class="explain">
