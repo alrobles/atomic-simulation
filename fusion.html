@@ -57,6 +57,13 @@
   .note{color:#8b949e;font-size:12px}
   .explain p{margin:8px 0}
   .explain b{color:#fff}
+  @media (max-width:900px){
+    html,body{height:auto}
+    body{overflow:auto}
+    #stage{flex:none;height:52vh;min-height:260px}
+    #mid{flex-direction:column}
+    #side{width:auto;min-width:0;border-left:0;border-top:1px solid #30363d}
+  }
 </style>
 </head>
 <body>
@@ -117,9 +124,10 @@
       <div class="kv"><span>⁴He forjados</span><b id="stHe4">0</b></div>
       <div class="kv"><span>p⁺ libres</span><b id="stP">40</b></div>
       <div class="kv"><span>En plumas (d, ³He)</span><b id="stMid">0</b></div>
-      <div class="kv"><span>Energía liberada</span><b id="stE">0 MeV</b></div>
+      <div class="kv"><span>Energía liberada <small class="note">(Q total, incluye los 2νₑ)</small></span><b id="stE">0 MeV</b></div>
       <div class="kv"><span>Materia convertida (E=mc²)</span><b id="stKg">0 kg</b></div>
       <div class="kv"><span>Tasa media</span><b id="stRate">0 MeV/s</b></div>
+      <p class="note">El contador suma el Q completo de cada reacción, <b>incluida</b> la energía que se llevan los neutrinos (~0.5 MeV de los 26.7 por ⁴He, un 2 %): así cuadra con el Δm·c² de la línea de arriba. Lo que calienta el plasma es el resto (~26.2 MeV).</p>
 
       <h2>Registro de fusiones</h2>
       <div id="log"><div class="note">Las reacciones aparecerán aquí…</div></div>

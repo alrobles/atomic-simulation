@@ -9,6 +9,12 @@ const MEV2J = 1.602176634e-13;   // 1 MeV en joules
 const C2 = 299792458 * 299792458;
 const U2MEV = 931.494;           // 1 u → MeV/c²
 
+/* Energía: se contabiliza el Q COMPLETO de cada reacción, incluida la parte que se lleva
+ * el neutrino. En p+p → d + e⁺ + νₑ (Q = 1.44 MeV) el código suma qPrompt = Q − qAnni =
+ * 0.42 MeV al fusionar y +1.02 MeV al aniquilarse el positrón, de modo que
+ * 2×(0.42+1.02) + 2×5.49 + 12.86 = 26.72 MeV ≈ el Q tabulado de la cadena (26.73 MeV) y
+ * el Δm·c² que muestra la página cuadran. Lo que realmente calienta el plasma son
+ * ~26.2 MeV: ~0.5 MeV (2 %) escapan con los dos neutrinos. */
 const REACTIONS = {
   pp: { Q: 1.44, qPrompt: 0.42, qAnni: 1.02, eq: "p⁺ + p⁺ → d + e⁺ + νₑ",
         tau: 6.0, k: 40,
@@ -109,7 +115,7 @@ function fuse(a, b, rx) {
   const Mtot = a.A + b.A;
   const kill = new Set([a, b]);
   const prods = [];
-  const push = (type, frac) => {
+  const push = (type) => {
     const t = TYPES[type], m = t.A;
     const jx = rnd(-1, 1) * 14, jy = rnd(-1, 1) * 14;
     let vx = Mtot ? (Px * m / Mtot / Math.max(m, 0.02)) + jx : jx;
@@ -120,14 +126,14 @@ function fuse(a, b, rx) {
     prods.push(p); return p;
   };
   if (rx === REACTIONS.pp) {
-    push("d", 2 / 3);
-    const ep = push("ep", 0); ep.vx *= 3; ep.vy *= 3;   // positrón energético
-    const nu = push("nu", 0);                            // neutrino: sale volando
+    push("d");
+    const ep = push("ep"); ep.vx *= 3; ep.vy *= 3;   // positrón energético
+    const nu = push("nu");                            // neutrino: sale volando
     const na = rnd(0, Math.PI * 2), ns = rnd(220, 340);
     nu.vx = Math.cos(na) * ns; nu.vy = Math.sin(na) * ns;
   }
-  else if (rx === REACTIONS.pd) { push("he3", 1); }
-  else { push("he4", 4 / 6); push("p", 1 / 6); push("p", 1 / 6); }
+  else if (rx === REACTIONS.pd) { push("he3"); }
+  else { push("he4"); push("p"); push("p"); }
   parts = parts.filter(p => !kill.has(p));
 
   // energía: prompt ahora; positrón suma +1.02 MeV al aniquilarse
