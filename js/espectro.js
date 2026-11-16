@@ -13,20 +13,27 @@ const VIS_LO = 380, VIS_HI = 750;    // rango visible
 
 // ---------- funciones puras ----------
 
-/** λ (nm) → [r,g,b] 0..1, aproximación de Bruton; atenúa fuera del visible. */
+/** Gris neutro para λ fuera del visible: no existe un color perceptible que las represente. */
+const OUT_GREY = 0.62;
+const clamp01 = v => Math.min(1, Math.max(0, v));
+
+/** λ (nm) → [r,g,b] en 0..1, aproximación de Bruton.
+ *  Dentro de 380–780 nm es el color del arcoíris (atenuado en los bordes);
+ *  fuera devuelve gris neutro, nunca un color falso: sin este recorte los
+ *  UV salían verdes (g<0 con f<0) y los IR negros (invisibles). */
 function wave2rgb(w) {
+  if (w < 380 || w > 780) return [OUT_GREY, OUT_GREY, OUT_GREY];
   let r = 0, g = 0, b = 0;
-  if (w >= 380 && w < 440) { r = -(w - 440) / 60; g = 0; b = 1; }
-  else if (w < 490) { r = 0; g = (w - 440) / 50; b = 1; }
-  else if (w < 510) { r = 0; g = 1; b = -(w - 510) / 20; }
-  else if (w < 580) { r = (w - 510) / 70; g = 1; b = 0; }
-  else if (w < 645) { r = 1; g = -(w - 645) / 65; b = 0; }
-  else if (w <= 780) { r = 1; g = 0; b = 0; }
+  if (w < 440) { r = -(w - 440) / 60; b = 1; }
+  else if (w < 490) { g = (w - 440) / 50; b = 1; }
+  else if (w < 510) { g = 1; b = -(w - 510) / 20; }
+  else if (w < 580) { r = (w - 510) / 70; g = 1; }
+  else if (w < 645) { r = 1; g = -(w - 645) / 65; }
+  else { r = 1; }
   let f = 1;
   if (w > 700) f = 0.3 + 0.7 * (780 - w) / 80;
   else if (w < 420) f = 0.3 + 0.7 * (w - 380) / 40;
-  if (w < 380 || w > 780) { const k = 0.22; r *= k; g *= k; b = b * k + 0.10; }
-  return [r * f, g * f, b * f];
+  return [clamp01(r * f), clamp01(g * f), clamp01(b * f)];
 }
 const rgbCss = c => `rgb(${c.map(v => Math.round(Math.min(1, Math.max(0, v)) * 255)).join(",")})`;
 
@@ -35,7 +42,9 @@ const COL_NAME = ["s", "p", "d", "f"];
 const COL_CSS = ["#ff6b6b", "#ffd43b", "#4dabf7", "#69db7c"]; // mismos colores que orbitales.html
 
 function prepLevel(l) {
-  const c = (l.orb || "s")[0].toLowerCase();
+  // Los datos etiquetan el orbital con su capa ("2p", "6s", "10d"): la letra es el ÚLTIMO carácter.
+  const o = String(l.orb || "s").toLowerCase();
+  const c = o[o.length - 1];
   l.col = COL[c] !== undefined ? COL[c] : 1;
   l.xoff = ((Math.round(l.e * 7) % 5) - 2) * 2.5; // jitter determinista anti-solape
   return l;
@@ -222,7 +231,9 @@ function drawSpec(now) {
     c.fillStyle = rgbCss([r, g, b]); c.font = "bold 11px sans-serif";
     c.fillText(hoverLine.lam.toFixed(1) + " nm", Math.min(x + 4, W - 60), 24);
   }
-  $("specinfo").textContent = G ? `${G.name} · ${G.lines.length} líneas neutras (NIST ASD) · clic en una línea` : "";
+  $("specinfo").textContent = G
+    ? `${G.name} · ${G.lines.length} líneas neutras (NIST ASD) · gris = sin color visible (UV <380 nm, IR >780 nm) · clic en una línea`
+    : "";
 }
 
 function drawSpecAxis(c, W, H) {
