@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Superposición Temporal Ψ(r, t) — Átomo Radiante</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .sp-card { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:10px 12px; font-size:13px; line-height:1.5; margin-bottom:10px; }
+  .sp-row { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+  .sp-btn { background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:5px 10px; font-size:13px; cursor:pointer; }
+  .sp-btn:hover { background:#30363d; }
+  .sp-btn.on { background:#f0c000; color:#000; border-color:#f0c000; font-weight:700; }
+  #waveCanvas { width:100%; height:130px; background:#0d1117; border:1px solid #30363d; border-radius:8px; display:block; margin-top:8px; }
+  #densityCanvas { width:100%; height:100%; display:block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Superposición Temporal Ψ(r⃗, t) <span>¿Cómo emite luz un electrón "saltando" entre orbitales?</span></h1>
+  <p class="alt">
+    <a href="index.html">← portada</a> ·
+    <a href="orbitales.html">gases nobles</a> ·
+    <a href="orbitales_all.html">tabla periódica</a> ·
+    <a href="espectro.html">espectro y Zeeman</a> ·
+    <a href="quimica.html">hibridación y enlace →</a>
+  </p>
+</header>
+
+<main>
+  <section id="stage" data-view="field">
+    <div id="toolbar">
+      <button id="btnPlay" class="on">⏸ Pausar</button>
+      <div class="spin">
+        <span class="seglab">Velocidad ω</span>
+        <input type="range" id="speedSlider" min="0.2" max="3" step="0.1" value="1">
+      </div>
+      <div class="spin">
+        <span class="seglab">Mezcla |c₂|²</span>
+        <input type="range" id="mixSlider" min="0" max="1" step="0.02" value="0.5">
+        <span id="mixVal" style="font-size:12px; color:#f0c000; min-width:34px;">50%</span>
+      </div>
+      <button id="btnExportPNG" title="Exportar mapa de densidad actual (PNG)">📷 PNG</button>
+    </div>
+    <div id="view">
+      <canvas id="densityCanvas"></canvas>
+      <div id="info"></div>
+      <div id="hint">Corte en el plano xz · la flecha amarilla muestra el momento dipolar ⟨z⟩(t)</div>
+    </div>
+  </section>
+
+  <aside id="side">
+    <h2>Transiciones predefinidas</h2>
+    <div class="sp-row" id="presetBtns">
+      <button class="sp-btn on" data-p="1s-2pz">1s ↔ 2p_z (Lyman α)</button>
+      <button class="sp-btn" data-p="2pz-3dz2">2p_z ↔ 3d_z² (Balmer)</button>
+      <button class="sp-btn" data-p="1s-3pz">1s ↔ 3p_z (Lyman β)</button>
+      <button class="sp-btn" data-p="1s-2s">1s ↔ 2s (monopolar)</button>
+    </div>
+
+    <div class="sp-card" id="stateInfo"></div>
+
+    <h2>Dipolo oscilante ⟨z⟩(t)</h2>
+    <canvas id="waveCanvas"></canvas>
+
+    <section class="explain" style="margin-top:12px;">
+      <h2>La física</h2>
+      <p><b>1. Superposición cuántica:</b> Un estado puro (1s o 2p) es estacionario: |ψ|² no cambia en el tiempo y no irradia. Durante una transición, el electrón está en superposición Ψ = c₁ψ₁e<sup>−iE₁t/ℏ</sup> + c₂ψ₂e<sup>−iE₂t/ℏ</sup>.</p>
+      <p><b>2. Interferencia temporal:</b> El término cruzado 2c₁c₂ψ₁ψ₂cos(ωt) hace oscilar la nube electrónica de un lado al otro del núcleo a la frecuencia exacta de Bohr ω = (E₂ − E₁)/ℏ.</p>
+      <p><b>3. Reglas de selección:</b> Cuando Δℓ = ±1 (ej. 1s ↔ 2p_z), la carga oscila como un <b>dipolo eléctrico</b> que emite radiación electromagnética. En 1s ↔ 2s (Δℓ = 0), la nube "respira" radialmente pero ⟨z⟩ = 0: transición dipolar prohibida.</p>
+    </section>
+  </aside>
+</main>
+
+<script src="js/physics.js"></script>
+<script src="js/superposicion.js"></script>
+</body>
+</html>
