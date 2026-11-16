@@ -40,23 +40,26 @@
       <div id="info"></div>
       <button id="back" hidden>← volver al átomo</button>
       <div id="panel">
-        <div class="opts">
-          <label class="only-cloud"><input type="checkbox" id="optSlice" checked> corte (ver capas)</label>
-          <label class="only-cloud only-radial"><input type="checkbox" id="optNew" checked> resaltar lo nuevo</label>
-          <label class="only-field">mostrar
-            <select id="optQty">
-              <option value="P">densidad radial 4πr²ρ (capas)</option>
-              <option value="rho">densidad ρ (escala log)</option>
-            </select>
-          </label>
-          <label class="only-field"><input type="checkbox" id="optContour" checked> contornos</label>
-        </div>
-        <div class="lhead">Capas (quita capas para "pelar la cebolla"):</div>
-        <div id="layers"></div>
-        <div class="lbtns">
-          <button data-show="all">todas</button>
-          <button data-show="new">solo lo nuevo</button>
-          <button data-show="core">solo el carozo</button>
+        <button type="button" class="panel-toggle" id="panelToggle"><span>⚙ Capas</span><span class="chev">▾</span></button>
+        <div class="panel-body">
+          <div class="opts">
+            <label class="only-cloud"><input type="checkbox" id="optSlice" checked> corte (ver capas)</label>
+            <label class="only-cloud only-radial"><input type="checkbox" id="optNew" checked> resaltar lo nuevo</label>
+            <label class="only-field">mostrar
+              <select id="optQty">
+                <option value="P">densidad radial 4πr²ρ (capas)</option>
+                <option value="rho">densidad ρ (escala log)</option>
+              </select>
+            </label>
+            <label class="only-field"><input type="checkbox" id="optContour" checked> contornos</label>
+          </div>
+          <div class="lhead">Capas (quita capas para "pelar la cebolla"):</div>
+          <div id="layers"></div>
+          <div class="lbtns">
+            <button data-show="all">todas</button>
+            <button data-show="new">solo lo nuevo</button>
+            <button data-show="core">solo el carozo</button>
+          </div>
         </div>
       </div>
       <div id="hint"></div>

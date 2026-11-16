@@ -235,6 +235,26 @@
       : `${el.sym}_Z${state.Z}.png`;
     mainV.exportPNG(name, { transparent: true, scale: 2 });
   });
+
+  if ($("panelToggle")) {
+    const panel = $("panel"), chev = $("panelToggle").querySelector(".chev");
+    const setCollapsed = (c) => {
+      panel.classList.toggle("collapsed", c);
+      if (chev) chev.textContent = c ? "▸" : "▾";
+    };
+    if (window.innerWidth <= 900) setCollapsed(true);
+    $("panelToggle").addEventListener("click", () => setCollapsed(!panel.classList.contains("collapsed")));
+  }
+
+  if ($("ptToggle")) {
+    const pt = $("ptable-container"), btn = $("ptToggle");
+    const setPt = (hide) => {
+      pt.hidden = hide;
+      btn.textContent = hide ? "Tabla ▸" : "Tabla ▾";
+    };
+    if (window.innerWidth <= 760) setPt(true);
+    btn.addEventListener("click", () => setPt(!pt.hidden));
+  }
   $("optQty").addEventListener("change", (e) => { state.qty = e.target.value; renderMain(); });
   $("optContour").addEventListener("change", (e) => { state.contours = e.target.checked; renderMain(); });
 

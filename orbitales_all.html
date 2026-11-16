@@ -166,6 +166,7 @@
       </select>
     </label>
     <span id="ptLegend" style="font-size:11px; color:#8b949e;"></span>
+    <button type="button" id="ptToggle" title="Mostrar u ocultar tabla periódica">Tabla ▾</button>
   </div>
   <div id="ptable-container"></div>
 </section>
@@ -197,24 +198,27 @@
       <div id="info"></div>
       <button id="back" hidden>← volver al átomo</button>
       <div id="panel">
-        <div class="opts">
-          <label class="only-cloud"><input type="checkbox" id="optSlice" checked> corte (ver capas)</label>
-          <label class="only-cloud only-radial"><input type="checkbox" id="optNew" checked> resaltar valencia</label>
-          <label title="Contracción relativista s/p y expansión d/f para Z > 70 (Au, Hg, Og)"><input type="checkbox" id="optRel" checked> efectos relativistas (Z&gt;70)</label>
-          <label class="only-field">mostrar
-            <select id="optQty">
-              <option value="P">densidad radial 4πr²ρ (capas)</option>
-              <option value="rho">densidad ρ (escala log)</option>
-            </select>
-          </label>
-          <label class="only-field"><input type="checkbox" id="optContour" checked> contornos</label>
-        </div>
-        <div class="lhead">Capas ocupadas (activa o desactiva para explorar el interior):</div>
-        <div id="layers"></div>
-        <div class="lbtns">
-          <button data-show="all">todas</button>
-          <button data-show="new">solo valencia</button>
-          <button data-show="core">solo carozo</button>
+        <button type="button" class="panel-toggle" id="panelToggle"><span>⚙ Capas</span><span class="chev">▾</span></button>
+        <div class="panel-body">
+          <div class="opts">
+            <label class="only-cloud"><input type="checkbox" id="optSlice" checked> corte (ver capas)</label>
+            <label class="only-cloud only-radial"><input type="checkbox" id="optNew" checked> resaltar valencia</label>
+            <label title="Contracción relativista s/p y expansión d/f para Z > 70 (Au, Hg, Og)"><input type="checkbox" id="optRel" checked> efectos relativistas (Z&gt;70)</label>
+            <label class="only-field">mostrar
+              <select id="optQty">
+                <option value="P">densidad radial 4πr²ρ (capas)</option>
+                <option value="rho">densidad ρ (escala log)</option>
+              </select>
+            </label>
+            <label class="only-field"><input type="checkbox" id="optContour" checked> contornos</label>
+          </div>
+          <div class="lhead">Capas ocupadas (activa o desactiva para explorar el interior):</div>
+          <div id="layers"></div>
+          <div class="lbtns">
+            <button data-show="all">todas</button>
+            <button data-show="new">solo valencia</button>
+            <button data-show="core">solo carozo</button>
+          </div>
         </div>
       </div>
       <div id="hint">Arrastra para rotar · rueda para zoom</div>

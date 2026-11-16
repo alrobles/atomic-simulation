@@ -92,6 +92,16 @@
     mainV.exportPNG(name, { transparent: true, scale: 2 });
   });
 
+  if ($("panelToggle")) {
+    const panel = $("panel"), chev = $("panelToggle").querySelector(".chev");
+    const setCollapsed = (c) => {
+      panel.classList.toggle("collapsed", c);
+      if (chev) chev.textContent = c ? "▸" : "▾";
+    };
+    if (window.innerWidth <= 900) setCollapsed(true);
+    $("panelToggle").addEventListener("click", () => setCollapsed(!panel.classList.contains("collapsed")));
+  }
+
   // ---------- Visor principal ----------
   function renderMain() {
     const g = A.NOBLES[state.k];

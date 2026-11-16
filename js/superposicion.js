@@ -93,7 +93,7 @@
     const lam = dE > 0 ? (1239.84 / dE).toFixed(1) : "∞";
     const c2 = Math.sqrt(state.mix), c1 = Math.sqrt(1 - state.mix);
 
-    $("info").innerHTML = `<div class="big">Ψ(r⃗, t) = ${c1.toFixed(2)} ψ(${p.label.split(" ↔ ")[0]}) + ${c2.toFixed(2)} ψ(${p.label.split(" ↔ ")[1]}) e<sup>−iωt</sup></div>
+    $("info").innerHTML = `<div class="big">Ψ(<b>r</b>, t) = ${c1.toFixed(2)} ψ(${p.label.split(" ↔ ")[0]}) + ${c2.toFixed(2)} ψ(${p.label.split(" ↔ ")[1]}) e<sup>−iωt</sup></div>
       ΔE = <b>${dE.toFixed(2)} eV</b> · λ = <b>${lam} nm</b> · Oscilación |Ψ|² a frecuencia ω = ΔE/ℏ`;
 
     $("stateInfo").innerHTML = `

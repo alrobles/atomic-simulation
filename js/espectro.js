@@ -243,8 +243,8 @@ function drawSpec(now) {
   c.fillStyle = "rgba(13,17,23,0.72)";
   c.fillRect(0, 0, x0, H); c.fillRect(x1, 0, W - x1, H);
   c.fillStyle = "#6e7681"; c.font = "10px sans-serif"; c.textAlign = "center";
-  c.fillText("UV", x0 / 2, 12); c.fillText("IR", (W + x1) / 2, 12);
-  c.fillText("VISIBLE", (x0 + x1) / 2, 12);
+  c.fillText("UV", x0 / 2, 34); c.fillText("IR", (W + x1) / 2, 34);
+  c.fillText("VISIBLE", (x0 + x1) / 2, 34);
 
   // líneas de emisión
   const maxH = H * 0.62;

@@ -1,4 +1,5 @@
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
 body { font-family: system-ui, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; display: flex; flex-direction: column; }
 button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
@@ -38,6 +39,8 @@ select { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-
 #stage[data-view=field] .only-radial { display: none; }
 #stage:not([data-view=field]) .only-field { display: none; }
 #info { position: absolute; top: 10px; left: 14px; max-width: calc(100% - 360px); pointer-events: none; font-size: 14px; line-height: 1.45; text-shadow: 0 0 4px #000; z-index: 5; }
+#view:not(:has(#panel)) #info { max-width: calc(100% - 28px); }
+#view:has(#panel.collapsed) #info { max-width: calc(100% - 170px); }
 #info .big { font-size: 24px; font-weight: 700; }
 #info .conf { font-size: 15px; }
 #info .dim { color: #8b949e; }
@@ -45,6 +48,11 @@ select { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-
 .legend i:first-child { margin-left: 0; }
 #back { position: absolute; top: 120px; left: 14px; z-index: 6; }
 #panel { position: absolute; right: 12px; top: 12px; background: #161b22ee; backdrop-filter: blur(8px); border: 1px solid #30363d; border-radius: 8px; padding: 8px 10px; max-width: 340px; max-height: calc(100% - 24px); overflow-y: auto; font-size: 12px; z-index: 10; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+#panel.collapsed { padding: 4px; max-width: none; overflow: visible; }
+#panel.collapsed .panel-body { display: none; }
+.panel-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px; background: transparent; border: 0; padding: 2px 4px; color: #e6edf3; font-size: 12px; font-weight: 600; cursor: pointer; }
+.panel-toggle:hover { background: #21262d; }
+.panel-body { margin-top: 6px; }
 .opts { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 6px; }
 .lhead { color: #8b949e; font-size: 11px; margin-bottom: 4px; }
 #layers { display: flex; flex-wrap: wrap; gap: 4px 8px; max-width: 100%; }
@@ -84,4 +92,7 @@ h2 { font-size: 17px; margin: 4px 0 8px; }
   main { grid-template-columns: 1fr; grid-template-rows: 65vh auto; }
   body { height: auto; }
   #side { border-left: 0; border-top: 1px solid #30363d; }
+  #info { max-width: calc(100% - 28px); font-size: 12px; }
+  #info .big { font-size: 18px; }
+  #panel { max-width: calc(100% - 24px); }
 }
