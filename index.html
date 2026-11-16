@@ -27,6 +27,18 @@
     --link:#58a6ff;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --serif:ui-serif,"Iowan Old Style",Charter,"Palatino Linotype",Palatino,Georgia,serif;
+    /* sistema de superficies y bordes, tomado de las otras páginas del usuario (litreview v3) */
+    --surface:#0d1117;
+    --surface-2:#111823;
+    --hair:rgba(161,185,211,.13);
+    --glow-d:rgba(77,171,247,.16);
+    --glow-o:rgba(255,146,43,.14);
+    --glow-g:rgba(240,192,0,.13);
+    --radius:16px;
+    --radius-sm:10px;
+    --pill:9999px;
+    --t-fast:.15s ease;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -37,6 +49,10 @@
   }
   a{color:var(--link);text-decoration:none;text-underline-offset:3px}
   a:hover{text-decoration:underline}
+  /* la voz del texto: serif para los titulares, sans para la interfaz, mono solo para los datos */
+  h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+  p{text-wrap:pretty}
+  .card-body h3,.card-tag,.act-sub,.band-head p{font-family:var(--sans)}
   :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
   /* superficies del navegador: también son parte del diseño */
   ::selection{background:#f0c00040;color:#fff}
@@ -58,14 +74,22 @@
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em;color:var(--fg)}
   .brand:hover{text-decoration:none}
   .brand svg{flex:none}
-  .brand b{font-size:15px;white-space:nowrap}
+  .brand b{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+  .brand em{font-style:normal;color:var(--gold)}
   .brand span{font-weight:400;color:var(--dim);font-size:12px;white-space:nowrap;display:none}
   @media (min-width:620px){.brand span{display:inline}}
-  nav.top-nav{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:13.5px}
-  nav.top-nav a{color:var(--muted);padding:6px 9px;border-radius:7px;white-space:nowrap}
-  nav.top-nav a:hover{color:var(--fg);background:#161b22;text-decoration:none}
-  nav.top-nav a.gh{color:var(--fg);border:1px solid var(--line2);margin-left:6px}
-  nav.top-nav a.gh:hover{border-color:#4d5560}
+  .chip{
+    font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--dim);border:1px solid var(--hair);border-radius:var(--pill);padding:4px 10px;
+    white-space:nowrap;flex:none;
+  }
+  @media (max-width:760px){.chip{display:none}}
+  nav.top-nav{margin-left:auto;display:flex;align-items:center;gap:2px;font-size:13.5px}
+  nav.top-nav a{color:var(--muted);padding:7px 12px;border-radius:var(--pill);white-space:nowrap;transition:color var(--t-fast),background var(--t-fast)}
+  nav.top-nav a:hover{color:var(--fg);background:rgba(255,255,255,.06);text-decoration:none}
+  nav.top-nav a.gh{color:var(--fg);border:1px solid var(--line2);margin-left:8px}
+  nav.top-nav a.gh:hover{border-color:#4d5560;background:rgba(255,255,255,.04)}
+  nav.top-nav a.active{color:var(--fg);background:rgba(255,255,255,.07)}
   @media (max-width:600px){
     header.top{padding:8px 12px;gap:8px}
     .brand b{font-size:14px}
@@ -104,11 +128,11 @@
   }
   .hero-scrim{width:min(940px,100%)}
   h1{
-    font-size:clamp(2.4rem,7.2vw,4.4rem);line-height:1.02;margin:0 0 18px;
-    letter-spacing:-.035em;font-weight:800;
+    font-size:clamp(2.3rem,6.4vw,4rem);line-height:1.06;margin:0 0 20px;
+    letter-spacing:-.022em;font-weight:600;
   }
   h1 em{font-style:normal;color:var(--gold)}
-  .lede{font-size:clamp(1rem,2.4vw,1.2rem);color:#c3ccd6;max-width:640px;margin:0 auto 12px}
+  .lede{font-size:clamp(1rem,2.4vw,1.18rem);color:#c3ccd6;max-width:660px;margin:0 auto 12px}
   .lede b{color:#fff;font-weight:600}
   .orblabel{
     font-family:var(--mono);font-size:12.5px;color:var(--muted);min-height:1.6em;
@@ -117,14 +141,15 @@
   .orblabel b{color:var(--d);font-weight:600}
   .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
   .btn{
-    display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;
-    font-weight:600;font-size:15px;border:1px solid transparent;transition:transform .18s,background .18s,border-color .18s;
+    display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:var(--pill);
+    font-weight:600;font-size:15px;border:1px solid transparent;
+    transition:transform var(--t-fast),background var(--t-fast),border-color var(--t-fast),box-shadow var(--t-fast);
   }
   .btn:hover{text-decoration:none;transform:translateY(-2px)}
-  .btn-primary{background:var(--fg);color:#05070b}
+  .btn-primary{background:var(--fg);color:#05070b;box-shadow:0 10px 26px -14px rgba(230,237,243,.5)}
   .btn-primary:hover{background:#fff}
-  .btn-ghost{background:#0d1117;border-color:var(--line2);color:var(--fg)}
-  .btn-ghost:hover{border-color:#4d5560;background:#161b22}
+  .btn-ghost{background:rgba(255,255,255,.03);border-color:var(--line2);color:var(--fg)}
+  .btn-ghost:hover{border-color:#4d5560;background:rgba(255,255,255,.07)}
   .scroll-cue{
     position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:var(--mono);
     font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);z-index:2;
@@ -132,9 +157,9 @@
   .scroll-cue i{display:block;width:1px;height:26px;margin:8px auto 0;background:linear-gradient(var(--dim),transparent)}
 
   /* ---------- secciones ---------- */
-  section.band{padding:72px 20px;max-width:1180px;margin:0 auto;scroll-margin-top:40px}
-  .band-head{max-width:660px;margin-bottom:46px}
-  h2{font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.12;letter-spacing:-.025em;margin:0 0 14px;font-weight:750}
+  section.band{padding:86px 20px;max-width:1180px;margin:0 auto;scroll-margin-top:64px}
+  .band-head{max-width:64ch;margin-bottom:52px}
+  h2{font-size:clamp(1.65rem,3.6vw,2.35rem);line-height:1.14;letter-spacing:-.02em;margin:0 0 14px;font-weight:600}
   .band-head p{color:var(--muted);margin:0;font-size:1.02rem}
   .band-head p b{color:#dbe3ea}
 
@@ -155,35 +180,55 @@
       background:var(--space);border:2px solid var(--gold);transform:translateX(50%);z-index:2;
     }
   }
-  .act-num{font-size:12px;font-weight:600;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
-  .act-title{font-size:1.06rem;font-weight:700;margin:4px 0 4px;letter-spacing:-.01em}
-  .act-sub{font-size:13px;color:var(--dim);margin:0;line-height:1.5}
+  .act-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 5px}
+  .act-num{font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;font-variant-numeric:tabular-nums}
+  .act-title{font-size:1.2rem;font-weight:600;margin:0;letter-spacing:-.012em;text-wrap:balance}
+  .act-sub{font-size:13px;color:var(--dim);margin:0;line-height:1.5;max-width:44ch}
   .cards{display:grid;gap:18px;grid-template-columns:1fr}
   @media (min-width:680px){.cards{grid-template-columns:repeat(2,1fr)}}
   @media (min-width:1080px){.cards.cols-3{grid-template-columns:repeat(3,1fr)}}
 
   .card{
-    display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--line);
-    border-radius:16px;overflow:hidden;color:var(--fg);position:relative;
-    transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+    display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--hair);
+    border-radius:var(--radius);overflow:hidden;color:var(--fg);position:relative;
+    transition:transform .24s cubic-bezier(.2,.7,.3,1),border-color .24s ease,box-shadow .24s ease,background .24s ease;
   }
-  .card:hover{transform:translateY(-4px);border-color:#3d444d;box-shadow:0 18px 40px -18px #000,0 0 0 1px #ffffff0a}
+  /* el halo es luz difusa del color del acto, nunca un contorno */
+  .card::after{
+    content:"";position:absolute;bottom:-52%;right:-30%;width:15rem;height:15rem;border-radius:50%;
+    filter:blur(64px);opacity:0;pointer-events:none;transition:opacity .4s ease;z-index:0;
+  }
+  .act:nth-child(odd) .card::after{background:var(--glow-d)}
+  .act:nth-child(even) .card::after{background:var(--glow-o)}
+  .card.lead::after{opacity:.42}
+  .card:hover{transform:translateY(-4px);border-color:rgba(161,185,211,.26);background:var(--surface-2);box-shadow:0 22px 44px -22px #000}
+  .card:hover::after{opacity:.6}
+  /* el acto abre con una tarjeta destacada: rompe la rejilla de tarjetas idénticas */
+  @media (min-width:900px){
+    .card.lead{grid-column:1/-1;flex-direction:row}
+    .card.lead .art{flex:0 0 46%;aspect-ratio:auto;border-bottom:0;border-right:1px solid var(--hair)}
+    .card.lead .card-body{padding:26px 28px;justify-content:center;gap:9px}
+    .card.lead .card-body h3{font-size:1.35rem}
+    .card.lead .card-body p{font-size:15px;max-width:54ch}
+  }
   .card:hover .art{transform:scale(1.035)}
   .art{
-    position:relative;aspect-ratio:16/10;background:
+    position:relative;z-index:1;aspect-ratio:16/10;background:
       radial-gradient(340px 200px at 70% 20%,#ffffff0a,transparent 70%),#0a0e14;
     border-bottom:1px solid var(--line);overflow:hidden;display:block;
+    padding:10px 12px 27px;
     transition:transform .5s cubic-bezier(.2,.7,.3,1);transform-origin:50% 45%;
   }
-  .art svg,.art canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* el hueco de la figura y el del pie, también en el HTML estático: sin JS se ve igual */
+  .art svg,.art canvas{position:relative;width:100%;height:100%;display:block}
   /* la ilustración vive sobre una franja reservada para el pie de figura: nunca lo pisa */
-  .art .fig{position:absolute;inset:0 0 22px 0;display:block;overflow:hidden}
+  .art .fig{position:relative;width:100%;height:100%;display:block;overflow:hidden}
   .art .fig > svg,.art .fig > canvas{position:static;width:100%;height:100%;display:block}
   .art .hint{
-    position:absolute;left:12px;bottom:3px;right:12px;font-family:var(--mono);font-size:11px;
+    position:absolute;left:14px;bottom:9px;right:14px;font-family:var(--mono);font-size:11px;
     color:#aab4bf;letter-spacing:.01em;z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .card-body{padding:16px 17px 17px;display:flex;flex-direction:column;flex:1;gap:7px}
+  .card-body{position:relative;z-index:1;padding:16px 17px 17px;display:flex;flex-direction:column;flex:1;gap:7px}
   .card-tag{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
   .card-body h3{margin:0;font-size:1.12rem;letter-spacing:-.015em;font-weight:700;line-height:1.25}
   .card-body p{margin:0;font-size:14.2px;color:var(--muted);line-height:1.55}
@@ -195,9 +240,6 @@
   .card-go i{font-style:normal;transition:transform .2s}
   .card:hover .card-go i{transform:translateX(4px)}
   .card:focus-within{border-color:var(--gold)}
-  /* un solo enlace por tarjeta, que cubre toda la superficie */
-  .card .hit{position:absolute;inset:0;z-index:4}
-  .card .hit:focus-visible{outline-offset:-3px}
 
   /* espectro de la tarjeta */
   .spec{display:flex;flex-direction:column;height:100%}
@@ -218,15 +260,22 @@
   .spec-gases button[aria-pressed=true]{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
 
   /* ---------- ciencia de verdad ---------- */
-  .stats{display:grid;gap:14px;grid-template-columns:1fr}
-  @media (min-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
-  @media (min-width:1000px){.stats{grid-template-columns:repeat(4,1fr)}}
-  .stat{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px 17px}
-  .stat b{display:block;font-family:var(--mono);font-size:1.55rem;letter-spacing:-.02em;color:var(--gold);font-weight:700}
-  .stat span{display:block;font-size:13.4px;color:var(--muted);margin-top:5px;line-height:1.5}
+  /* ficha de evidencia: filas con su valor medido en mono, no un cartel de cifras */
+  .evidence{margin:0;border-top:1px solid var(--hair)}
+  .evidence > div{
+    display:grid;grid-template-columns:1fr auto;gap:6px 26px;align-items:baseline;
+    padding:19px 4px;border-bottom:1px solid var(--hair);transition:background var(--t-fast);
+  }
+  .evidence > div:hover{background:rgba(255,255,255,.022)}
+  .evidence dt{font-size:15.4px;color:#dbe3ea;font-weight:550;line-height:1.4}
+  .evidence dt span{display:block;font-size:13.6px;color:var(--muted);font-weight:400;margin-top:5px;max-width:60ch}
+  .evidence dd{
+    margin:0;font-family:var(--mono);font-size:1.45rem;letter-spacing:-.02em;color:var(--fg);
+    font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
   .truth{
-    margin-top:30px;background:var(--bg);border:1px solid var(--line);
-    border-radius:14px;padding:20px 22px;
+    margin-top:34px;background:var(--surface);border:1px solid var(--hair);
+    border-radius:var(--radius);padding:22px 24px;
   }
   .truth h3{margin:0 0 10px;font-size:1.02rem;letter-spacing:-.01em}
   .truth h3::before{
@@ -241,8 +290,12 @@
   /* ---------- rutas ---------- */
   .routes{display:grid;gap:16px;grid-template-columns:1fr}
   @media (min-width:820px){.routes{grid-template-columns:repeat(3,1fr)}}
-  .route{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px 19px;display:flex;flex-direction:column;gap:9px}
-  .route .rt{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .route{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:18px 19px;display:flex;flex-direction:column;gap:9px}
+  .route .rt{
+    align-self:flex-start;font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--muted);border:1px solid var(--hair);border-radius:var(--pill);padding:3px 10px;
+  }
+  .route ol li::marker{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
   .route h3{margin:0;font-size:1.05rem;letter-spacing:-.01em}
   .route p{margin:0;font-size:14px;color:var(--muted)}
   .route ol{margin:6px 0 0;padding-left:19px;font-size:14px;color:var(--muted)}
@@ -257,8 +310,20 @@
   .foot-in nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
   .foot-in a{color:var(--muted)}
 
+  /* táctil: ningún control que exija puntería por debajo de 44 px (medido en iPhone) */
+  @media (pointer:coarse){
+    .btn{padding:15px 24px}
+    nav.top-nav a{padding:12px 13px}
+    .brand{padding:9px 0}
+    .spec-gases button{padding:14px 13px}
+    .foot-in a{display:inline-block;padding:13px 0}
+    .route ol li{margin:2px 0}
+    .route ol li a{display:inline-block;padding:13px 0;width:100%}
+    .route .go a{display:inline-block;padding:13px 0}
+  }
+
   @media (prefers-reduced-motion:reduce){
-    .card,.art,.card-go i{transition:none}
+    .card,.art,.card-go i,.card::after{transition:none}
     .card:hover{transform:none}
   }
 </style>
@@ -273,9 +338,10 @@
       <ellipse cx="16" cy="16" rx="11" ry="4.6" fill="none" stroke="#4dabf7" stroke-width="1.6" transform="rotate(-28 16 16)"/>
       <ellipse cx="16" cy="16" rx="11" ry="4.6" fill="none" stroke="#4dabf7" stroke-width="1.6" transform="rotate(62 16 16)"/>
     </svg>
-    <b>Del átomo a la estrella</b>
+    <b>Del átomo a la <em>estrella</em></b>
     <span>simulaciones de física y química</span>
   </a>
+  <span class="chip" title="Toda la física es código propio: no se descarga nada">sin librerías</span>
   <nav class="top-nav" aria-label="Navegación principal">
     <a href="#cadena" class="hide-sm">La cadena</a>
     <a href="#ciencia" class="hide-sm">La ciencia</a>
@@ -311,13 +377,12 @@
       <!-- ACTO 1 -->
       <div class="act">
         <div class="act-rail">
-          <p class="act-num">Acto 1</p>
-          <p class="act-title">Dentro del átomo</p>
+          <p class="act-head"><span class="act-num">Acto 1</span><span class="act-title">Dentro del átomo</span></p>
           <p class="act-sub">Dónde puede estar un electrón, y por qué los números 2, 10, 18, 36, 54, 86 y 118 son especiales.</p>
         </div>
         <div class="cards cols-3">
 
-          <a class="card" href="llenado.html">
+          <a class="card lead" href="llenado.html">
             <span class="art" aria-hidden="false">
               <svg viewBox="0 0 320 200" role="img" aria-label="Cajitas de orbitales 3p, 4s y 3d con flechas de espín, y una flecha que muestra que el 4s se llena antes que el 3d">
                 <g font-family="ui-monospace,Menlo,monospace" font-size="12">
@@ -346,7 +411,6 @@
               <p>El átomo se llena electrón por electrón con el deslizador. De ahí salen los números <b>2, 10, 18, 36, 54, 86 y 118</b>.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
 
           <a class="card" href="orbitales.html">
@@ -360,7 +424,6 @@
               <p>Cómo es <b>de verdad</b> un orbital: una nube de probabilidad, no una órbita. Con corte por fases, campo de densidad y distribución radial.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
 
           <a class="card" href="orbitales_all.html">
@@ -376,7 +439,6 @@
               <p>La misma nube para cualquier elemento de la tabla, con la carga nuclear efectiva de cada capa (reglas de Slater).</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
         </div>
       </div>
@@ -384,12 +446,11 @@
       <!-- ACTO 2 -->
       <div class="act">
         <div class="act-rail">
-          <p class="act-num">Acto 2</p>
-          <p class="act-title">La luz que emite</p>
+          <p class="act-head"><span class="act-num">Acto 2</span><span class="act-title">La luz que emite</span></p>
           <p class="act-sub">Un electrón que cae de nivel anuncia su caída con un fotón. Cada elemento tiene su huella luminosa.</p>
         </div>
         <div class="cards">
-          <a class="card" href="espectro.html">
+          <a class="card lead" href="espectro.html">
             <span class="art">
               <span class="spec">
                 <span class="spec-band">
@@ -409,9 +470,8 @@
               <p>Por qué el neón brilla rojo y el argón azul, cómo un campo magnético parte cada línea por <b>efecto Zeeman</b>, y por qué la mayoría de esas líneas <b>no tienen color</b>: son ultravioleta o infrarrojo, y por eso se dibujan en gris.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
-          <a class="card" href="superposicion.html">
+          <a class="card lead" href="superposicion.html">
             <span class="art">
               <svg viewBox="0 0 320 200" role="img" aria-label="La densidad electrónica oscilando entre dos orbitales, con el dipolo oscilante y la frecuencia de Bohr">
                 <line x1="24" y1="104" x2="300" y2="104" stroke="#2b3138" stroke-width="1"/>
@@ -439,7 +499,6 @@
               <p>Cómo oscila la densidad electrónica |Ψ|² entre dos orbitales y produce un dipolo eléctrico oscilante que emite radiación.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
         </div>
       </div>
@@ -447,12 +506,11 @@
       <!-- ACTO 3 -->
       <div class="act">
         <div class="act-rail">
-          <p class="act-num">Acto 3</p>
-          <p class="act-title">El corazón del Sol</p>
+          <p class="act-head"><span class="act-num">Acto 3</span><span class="act-title">El corazón del Sol</span></p>
           <p class="act-sub">Cuatro núcleos de hidrógeno se convierten en uno de helio. La masa que falta se vuelve luz.</p>
         </div>
         <div class="cards">
-          <a class="card" href="fusion.html">
+          <a class="card lead" href="fusion.html">
             <span class="art" aria-hidden="false">
               <svg viewBox="0 0 320 200" role="img" aria-label="Diagrama de la cadena protón-protón: cuatro protones producen helio-4, dos positrones, dos neutrinos y energía">
                 <g stroke="#2b3138" stroke-width="1">
@@ -487,7 +545,6 @@
               <p>La cadena protón-protón paso a paso: la barrera que casi nunca se cruza, los <b>26,7 MeV</b> y los neutrinos que escapan sin más.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
         </div>
       </div>
@@ -495,12 +552,11 @@
       <!-- ACTO 4 -->
       <div class="act">
         <div class="act-rail">
-          <p class="act-num">Acto 4</p>
-          <p class="act-title">La vida de una estrella</p>
+          <p class="act-head"><span class="act-num">Acto 4</span><span class="act-title">La vida de una estrella</span></p>
           <p class="act-sub">La misma fusión, repetida durante miles de millones de años, decide cómo nace y cómo muere una estrella.</p>
         </div>
         <div class="cards">
-          <a class="card" href="estrella.html">
+          <a class="card lead" href="estrella.html">
             <span class="art" aria-hidden="false">
               <svg viewBox="0 0 320 200" role="img" aria-label="Diagrama de Hertzsprung-Russell con la secuencia principal y trazas evolutivas">
                 <g stroke="#2b3138"><line x1="46" y1="18" x2="46" y2="168"/><line x1="46" y1="168" x2="300" y2="168"/></g>
@@ -524,7 +580,6 @@
               <p>Un diagrama de Hertzsprung-Russell en vivo: cambia la masa y mira <b>cuánto vive</b> y en qué acaba, desde una enana roja a un agujero negro.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
         </div>
       </div>
@@ -532,12 +587,11 @@
       <!-- ACTO 5 -->
       <div class="act">
         <div class="act-rail">
-          <p class="act-num">Acto 5</p>
-          <p class="act-title">Y de ahí, la química</p>
+          <p class="act-head"><span class="act-num">Acto 5</span><span class="act-title">Y de ahí, la química</span></p>
           <p class="act-sub">Los elementos que fabricaron las estrellas se enlazan entre sí. Casi toda esa química empieza con un enlace y un ángulo.</p>
         </div>
         <div class="cards cols-3">
-          <a class="card" href="quimica.html">
+          <a class="card lead" href="quimica.html">
             <span class="art">
               <svg viewBox="0 0 320 200" role="img" aria-label="Curva de energía de un orbital molecular enlazante y otro antienlazante frente a la distancia internuclear">
                 <g stroke="#2b3138"><line x1="44" y1="16" x2="44" y2="162"/><line x1="44" y1="162" x2="302" y2="162"/></g>
@@ -564,7 +618,6 @@
               <p>Hibridación interactiva (sp, sp², sp³, sp³d, sp³d²) y orbitales moleculares σ₁ₛ / σ₁ₛ* de H₂⁺ con distancia internuclear R variable.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
 
           <a class="card" href="agua.html">
@@ -601,7 +654,6 @@
               <p>Covalente pero polar: el oxígeno tira de los electrones y deja dos <b>polos con carga</b>. De ahí sale casi toda la química del planeta.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
 
           <a class="card" href="estados-agua.html">
@@ -636,7 +688,6 @@
               <p>Sólido, líquido y gas en movimiento: la red hexagonal del hielo, los puentes de hidrógeno y el <b>porqué de que el hielo flote</b>.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
         </div>
       </div>
@@ -644,12 +695,11 @@
       <!-- ACTO 6 -->
       <div class="act">
         <div class="act-rail">
-          <p class="act-num">Acto 6</p>
-          <p class="act-title">Y más allá de Schrödinger</p>
+          <p class="act-head"><span class="act-num">Acto 6</span><span class="act-title">Y más allá de Schrödinger</span></p>
           <p class="act-sub">La ecuación de Dirac añadió el espín y la antimateria. Los modelos del átomo no han dejado de sustituirse unos a otros.</p>
         </div>
         <div class="cards">
-          <a class="card" href="dirac.html">
+          <a class="card lead" href="dirac.html">
             <span class="art">
               <svg viewBox="0 0 320 200" role="img" aria-label="Espacio de configuración de dos fermiones: dos manchas simétricas y la diagonal x1 igual a x2 vacía">
                 <defs>
@@ -678,7 +728,6 @@
               <p>La línea del tiempo de los modelos del átomo —qué explicaba cada uno y en qué fallaba— y un simulador de <b>dos partículas de Dirac</b>: exclusión de Pauli, positronio y barrera de Klein.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
-            <span class="hit"></span>
           </a>
         </div>
       </div>
@@ -692,12 +741,12 @@
       <p>Todo lo que ves aquí sale de ecuaciones o de datos medidos, no de dibujos decorativos. Y eso se puede comprobar: el proyecto se autocomprueba cada vez que cambia.</p>
     </div>
 
-    <div class="stats">
-      <div class="stat"><b>660</b><span>líneas de emisión reales del NIST para los siete gases nobles, con su longitud de onda e intensidad medidas.</span></div>
-      <div class="stat"><b>0,2 %</b><span>es el margen que se exige a cada una de esas líneas: si alguna se desvía más, la comprobación falla.</span></div>
-      <div class="stat"><b>126</b><span>comprobaciones automáticas de la física en cada cambio, desde la forma del orbital hasta los MeV del Sol.</span></div>
-      <div class="stat"><b>0</b><span>librerías externas. Es HTML, CSS y JavaScript propios: se abre sin conexión, incluso desde un pendrive.</span></div>
-    </div>
+    <dl class="evidence">
+      <div><dt>Líneas de emisión medidas contra el NIST<span>los siete gases nobles, con su longitud de onda e intensidad reales</span></dt><dd>660</dd></div>
+      <div><dt>Margen máximo tolerado por línea<span>si alguna se desvía más, la comprobación falla y el cambio no se publica</span></dt><dd>0,2 %</dd></div>
+      <div><dt>Comprobaciones automáticas de la física<span>de la forma del orbital a los MeV del Sol, en cada cambio</span></dt><dd>126</dd></div>
+      <div><dt>Librerías externas<span>HTML, CSS y JavaScript propios: se abre sin conexión, incluso desde un pendrive</span></dt><dd>0</dd></div>
+    </dl>
 
     <div class="truth">
       <h3>Y aquí es donde te digo lo que no es</h3>
@@ -969,7 +1018,7 @@
       b.textContent = g;
       b.title = info ? info.name + " · Z = " + info.z + " · " + info.conf : g;
       b.setAttribute("aria-pressed", "false");
-      b.addEventListener("click", function () { userPicked = true; drawSpec(g); });
+      b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); userPicked = true; drawSpec(g); });
       gasesEl.appendChild(b);
       if (i === 1) drawSpec(g);   // arranca en el neón
     });
@@ -1006,6 +1055,31 @@
   })();
 
   /* ============ 4. Nada más: un solo momento de movimiento (el orbital del héroe) ============ */
+})();
+
+/* ============ 5. El nav dice en qué tramo estás, como en las otras páginas del ecosistema ============ */
+(function () {
+  var ids = ["cadena", "ciencia", "rutas"], links = {}, secciones = [];
+  ids.forEach(function (id) {
+    var a = document.querySelector('nav.top-nav a[href="#' + id + '"]');
+    var s = document.getElementById(id);
+    if (a && s) { links[id] = a; secciones.push(s); }
+  });
+  if (!secciones.length || !("IntersectionObserver" in window)) return;
+  var limpiar = function () {
+    for (var k in links) { links[k].classList.remove("active"); links[k].removeAttribute("aria-current"); }
+  };
+  var dentro = {};
+  var io = new IntersectionObserver(function (entradas) {
+    entradas.forEach(function (e) { dentro[e.target.id] = e.isIntersecting; });
+    var cual = null;
+    /* el primero de la cadena que esté en la banda central, y si no hay ninguno, se limpia */
+    ids.forEach(function (id) { if (cual === null && dentro[id]) cual = id; });
+    limpiar();
+    var a = cual === null ? null : links[cual];
+    if (a) { a.classList.add("active"); a.setAttribute("aria-current", "true"); }
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  secciones.forEach(function (s) { io.observe(s); });
 })();
 </script>
 </body>
