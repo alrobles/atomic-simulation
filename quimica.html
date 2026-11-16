@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Química y Enlace Químico — Hibridación y LCAO-MO</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .q-controls { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .q-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .q-btn { background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:5px 10px; font-size:13px; cursor:pointer; }
+  .q-btn:hover { background:#30363d; }
+  .q-btn.on { background:#f0c000; color:#000; border-color:#f0c000; font-weight:700; }
+  #moCurve { width:100%; height:190px; background:#0d1117; border:1px solid #30363d; border-radius:8px; display:block; margin-top:8px; }
+  .q-card { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:10px 12px; font-size:13px; line-height:1.5; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Química Cuántica y Enlace <span>Hibridación de orbitales y teoría LCAO-MO</span></h1>
+  <nav id="tabs">
+    <div class="tab on" data-mode="hybrid"><b>Hibridación</b><small>sp · sp² · sp³ · sp³d · sp³d²</small></div>
+    <div class="tab" data-mode="mo"><b>LCAO-MO</b><small>H₂⁺ / H₂ · σ₁ₛ y σ₁ₛ*</small></div>
+  </nav>
+  <p class="alt">
+    <a href="index.html">← portada</a> ·
+    <a href="orbitales.html">gases nobles</a> ·
+    <a href="orbitales_all.html">tabla periódica</a> ·
+    <a href="espectro.html">espectro y Zeeman</a> ·
+    <a href="superposicion.html">superposición Ψ(r,t)</a> ·
+    <a href="agua.html">molécula de agua →</a>
+  </p>
+</header>
+
+<main>
+  <section id="stage" data-view="cloud">
+    <div id="toolbar">
+      <div class="spin">
+        <span class="seglab">Giro</span>
+        <input type="range" id="spin" min="0" max="3" step="0.1" value="1">
+        <button id="pause" title="pausar / reanudar">⏸</button>
+      </div>
+      <button id="btnExportPNG" title="Exportar nube 3D con fondo transparente (PNG)">📷 PNG</button>
+    </div>
+    <div id="view">
+      <canvas id="main"></canvas>
+      <div id="info"></div>
+      <div id="hint">Arrastra para rotar · rueda para zoom</div>
+    </div>
+  </section>
+
+  <aside id="side">
+    <div id="panelHybrid">
+      <h2>Esquema de hibridación</h2>
+      <div class="q-controls">
+        <div class="q-row" id="hybBtns">
+          <button class="q-btn" data-h="sp">sp</button>
+          <button class="q-btn" data-h="sp2">sp²</button>
+          <button class="q-btn on" data-h="sp3">sp³</button>
+          <button class="q-btn" data-h="sp3d">sp³d</button>
+          <button class="q-btn" data-h="sp3d2">sp³d²</button>
+        </div>
+        <div style="font-size:12px; color:#8b949e; margin-top:4px;">Mostrar lóbulo:</div>
+        <div class="q-row" id="lobeBtns"></div>
+      </div>
+      <div class="q-card" id="hybInfo"></div>
+    </div>
+
+    <div id="panelMO" hidden>
+      <h2>Orbital Molecular (H₂⁺ / H₂)</h2>
+      <div class="q-controls">
+        <div class="q-row" id="moBtns">
+          <button class="q-btn on" data-mo="bond">σ₁ₛ (enlazante)</button>
+          <button class="q-btn" data-mo="anti">σ₁ₛ* (antienlazante)</button>
+        </div>
+        <div style="margin-top:4px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px;">
+            <span>Distancia internuclear <b>R</b></span>
+            <b id="rVal" style="color:#f0c000">2.50 a₀</b>
+          </div>
+          <input type="range" id="rSlider" min="0.5" max="6.0" step="0.05" value="2.5" style="width:100%;">
+        </div>
+      </div>
+      <div class="q-card" id="moInfo"></div>
+      <canvas id="moCurve"></canvas>
+    </div>
+
+    <section class="explain" style="margin-top:14px;">
+      <h2>La física de la interferencia</h2>
+      <p><b>Hibridación:</b> Al superponer funciones de onda atómicas de la misma capa (ej. ψ₂ₛ + ψ₂ₚ), las regiones donde ambas tienen el mismo signo se refuerzan (interferencia constructiva) y donde tienen signos opuestos se cancelan, creando lóbulos direccionales.</p>
+      <p><b>Enlace LCAO-MO:</b> Al acercar dos átomos de hidrógeno a distancia <i>R</i>, la suma en fase σ₁ₛ concentra densidad electrónica entre los núcleos y reduce la energía; la resta σ₁ₛ* crea un plano nodal central que los repele.</p>
+    </section>
+  </aside>
+</main>
+
+<script src="js/physics.js"></script>
+<script src="js/chemistry.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/quimica.js"></script>
+</body>
+</html>
