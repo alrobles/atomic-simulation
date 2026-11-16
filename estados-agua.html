@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estados del agua — dinámica molecular cualitativa</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;min-height:100%}
+  body{font-family:system-ui,"Segoe UI",sans-serif;background:#0d1117;color:#e6edf3;display:flex;flex-direction:column}
+  header{padding:10px 16px 8px;border-bottom:1px solid #30363d}
+  h1{font-size:20px;margin:0 0 8px}
+  h1 span{font-size:14px;font-weight:400;color:#8b949e;margin-left:8px}
+  .alt{margin:6px 0 0;font-size:12px}
+  .alt a{color:#58a6ff;text-decoration:none}
+  main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,.8fr)}
+  #stage{min-height:0;display:flex;flex-direction:column;border-right:1px solid #30363d}
+  #toolbar{display:flex;align-items:center;gap:7px;padding:8px 10px;border-bottom:1px solid #21262d;flex-wrap:wrap}
+  button{background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer}
+  button:hover{background:#30363d}
+  button.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
+  button.go{background:#1f6feb;border-color:#1f6feb;font-weight:600}
+  #canvasWrap{position:relative;flex:1;min-height:0}
+  #sim{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #label{position:absolute;left:13px;top:10px;font-size:12px;color:#c9d1d9;pointer-events:none;text-shadow:0 1px 4px #000}
+  #legend{position:absolute;left:13px;bottom:10px;display:flex;gap:12px;font-size:11px;color:#8b949e;pointer-events:none;text-shadow:0 1px 4px #000}
+  #legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+  #side{overflow-y:auto;padding:14px 16px;font-size:13px;line-height:1.5}
+  h2{font-size:16px;color:#f0c000;margin:4px 0 8px}
+  .metric{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed #21262d}
+  .metric b{text-align:right}
+  .controls{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .range{display:flex;align-items:center;gap:8px;margin:8px 0}
+  .range input{flex:1;accent-color:#f0c000}
+  .callout{background:#161b22;border:1px solid #30363d;border-left:3px solid #58a6ff;border-radius:7px;padding:9px 10px;margin:10px 0}
+  .callout b{color:#fff}
+  .note{font-size:12px;color:#8b949e}
+  p{margin:8px 0}
+  @media(max-width:900px){
+    html,body{height:auto}
+    main{display:flex;flex-direction:column}
+    #stage{height:60vh;min-height:380px;border-right:0;border-bottom:1px solid #30363d}
+    #side{overflow:visible}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Agua en movimiento <span>de la red cristalina al vapor</span></h1>
+  <p class="alt"><a href="agua.html">← molécula H₂O</a> · <a href="orbitales.html">átomos y orbitales</a> · <a href="fusion.html">fusión nuclear</a></p>
+</header>
+<main>
+  <section id="stage">
+    <div id="toolbar">
+      <div class="controls" id="phases" aria-label="Estado inicial">
+        <button data-phase="solid">❄ sólido</button>
+        <button data-phase="liquid" class="on">💧 líquido</button>
+        <button data-phase="gas">☁ gas</button>
+      </div>
+      <button id="btnRun" class="go">⏸ dinámica</button>
+      <button id="btnReset">↺ rearmar</button>
+    </div>
+    <div id="canvasWrap">
+      <canvas id="sim" aria-label="Simulación 2D de moléculas de agua"></canvas>
+      <div id="label"></div>
+      <div id="legend">
+        <span><i style="background:#f85149"></i>O</span>
+        <span><i style="background:#e6edf3"></i>H</span>
+        <span><i style="background:#58a6ff"></i>puente de hidrógeno</span>
+      </div>
+    </div>
+  </section>
+  <aside id="side">
+    <h2>Temperatura y movimiento</h2>
+    <div class="metric"><span>Estado inicial</span><b id="phaseName">Líquido</b></div>
+    <div class="metric"><span>Temperatura reducida T*</span><b id="tempRead">0.38</b></div>
+    <div class="metric"><span>Moléculas</span><b id="nRead">42</b></div>
+    <div class="metric"><span>Puentes H cercanos</span><b id="hbRead">—</b></div>
+    <div class="range"><span>calentar</span><input id="temp" type="range" min="8" max="150" value="38"><span id="tempVal">0.38</span></div>
+    <div class="callout" id="phaseDesc"></div>
+    <h2>¿Cómo interactúan?</h2>
+    <p>Las moléculas son cuerpos rígidos con un oxígeno y dos hidrógenos. El modelo calcula fuerzas entre vecinas: una atracción de corto alcance tipo <b>Lennard‑Jones</b> y una atracción direccional simplificada para los puentes de hidrógeno. La orientación también puede girar por el torque.</p>
+    <p>Arranca desde una configuración sólida, líquida o gaseosa y cambia T*. Al calentar, las moléculas ganan movimiento y la estructura se desordena; al enfriar, las atracciones las agrupan.</p>
+    <div class="callout"><b>Estrategia de cómputo:</b> una cuadrícula espacial busca solo moléculas cercanas. Así evitamos comparar cada molécula contra todas las demás (O(N²)); la búsqueda de vecinos se aproxima a O(N) para una densidad fija. Son 42 moléculas para que el movimiento fluido funcione en una laptop sin GPU especial.</div>
+    <p class="note"><b>Modelo cualitativo 2D, no simulación cuantitativa del diagrama de fases.</b> T* es temperatura reducida, no kelvin; las dimensiones y velocidades no están a escala temporal real. No se calculan electrones, enlaces covalentes ni cambios químicos: cada H₂O conserva su forma. El puente de hidrógeno se representa con una interacción efectiva orientacional inspirada en la estructura del agua.</p>
+    <p class="note">La página <a href="agua.html" style="color:#58a6ff">Molécula de agua</a> muestra con más detalle el ángulo, la polaridad y la densidad electrónica esquemática de una sola molécula.</p>
+  </aside>
+</main>
+<script src="js/estados-agua.js"></script>
+</body>
+</html>

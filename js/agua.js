@@ -6,6 +6,7 @@
 const ANGLE_DEG = 104.5;
 const BOND_ANGSTROM = 0.9584;
 const DIPOLE_DEBYE = 1.85;
+const DENSITY_POINTS = 5300;
 
 /** Coordenadas nucleares en el plano molecular; O está en el origen. */
 function waterGeometry(angleDeg = ANGLE_DEG, bondAngstrom = BOND_ANGSTROM) {
@@ -50,22 +51,20 @@ function normal() {
   const u = Math.max(random(), 1e-9), v = random();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
-const densitySamples = [];
-for (let i = 0; i < 150; i++) {
-  densitySamples.push({ kind: "core", x: normal() * 0.14, y: normal() * 0.14, z: normal() * 0.14 });
+const densitySamples = { core: [], lone: [[], []], bond: [[], []] };
+for (let i = 0; i < 600; i++) {
+  densitySamples.core.push({ x: normal() * 0.14, y: normal() * 0.14, z: normal() * 0.14 });
 }
 for (let pair = 0; pair < 2; pair++) {
-  for (let i = 0; i < 260; i++) {
-    densitySamples.push({
-      kind: "lone", pair,
+  for (let i = 0; i < 1450; i++) {
+    densitySamples.lone[pair].push({
       x: normal() * 0.17, y: normal() * 0.23, z: normal() * 0.14,
     });
   }
 }
 for (let bond = 0; bond < 2; bond++) {
-  for (let i = 0; i < 240; i++) {
-    densitySamples.push({
-      kind: "bond", bond,
+  for (let i = 0; i < 900; i++) {
+    densitySamples.bond[bond].push({
       t: 0.24 + random() * 0.68,
       n1: normal() * 0.075,
       n2: normal() * 0.075,
@@ -132,27 +131,32 @@ function lonePairCenter(pair, angle) {
 }
 
 function drawDensity(g, angle) {
+  // 5,300 muestras; transformar en un lote reduce trigonometría y cambios de estilo.
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const base = Math.min(W, H) * 0.43 * zoom;
+  const cx = W / 2, cy0 = H * 0.52;
+  const point = (x, y, z, size) => {
+    const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+    const y1 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+    const scale = base / (1 + z2 * 0.13);
+    ctx.fillRect(cx + x1 * scale, cy0 - y1 * scale, size, size);
+  };
   // Muestras didácticas de regiones electrónicas; no son electrones individuales.
-  for (const q of densitySamples) {
-    let p, color, alpha, size;
-    if (q.kind === "core") {
-      p = [q.x, q.y, q.z];
-      color = colors.oxygen; alpha = 0.28; size = 1.8;
-    } else if (q.kind === "lone") {
-      const c = lonePairCenter(q.pair, angle);
-      p = [c[0] + q.x, c[1] + q.y, c[2] + q.z];
-      color = colors.density; alpha = 0.35; size = 1.65;
-    } else {
-      const h = q.bond ? g.H2 : g.H1;
-      const dx = h[0], dy = h[1], len = Math.hypot(dx, dy) || 1;
-      const px = -dy / len, py = dx / len;
-      p = [h[0] * q.t + px * q.n1, h[1] * q.t + py * q.n1, q.n2];
-      color = colors.bondDensity; alpha = 0.26; size = 1.55;
+  ctx.globalAlpha = 0.28; ctx.fillStyle = colors.oxygen;
+  for (const q of densitySamples.core) point(q.x, q.y, q.z, 1.7);
+  ctx.globalAlpha = 0.34; ctx.fillStyle = colors.density;
+  for (let pair = 0; pair < 2; pair++) {
+    const c = lonePairCenter(pair, angle);
+    for (const q of densitySamples.lone[pair]) point(c[0] + q.x, c[1] + q.y, q.z, 1.5);
+  }
+  ctx.globalAlpha = 0.28; ctx.fillStyle = colors.bondDensity;
+  for (let bond = 0; bond < 2; bond++) {
+    const h = bond ? g.H2 : g.H1;
+    const len = Math.hypot(h[0], h[1]) || 1, px = -h[1] / len, py = h[0] / len;
+    for (const q of densitySamples.bond[bond]) {
+      point(h[0] * q.t + px * q.n1, h[1] * q.t + py * q.n1, q.n2, 1.45);
     }
-    const s = project(p);
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = color;
-    ctx.fillRect(s.x, s.y, size, size);
   }
   ctx.globalAlpha = 1;
 }
@@ -227,7 +231,8 @@ function updateText(angle) {
     vibration: ["Vibración molecular", vibMode === "bend" ? "Flexión: cambia el ángulo H–O–H; la animación está ralentizada para verla." : vibMode === "asymmetric" ? "Estiramiento asimétrico: un enlace O–H se alarga mientras el otro se acorta." : "Estiramiento simétrico: ambos enlaces O–H se alargan y acortan juntos."],
   };
   $("sceneLabel").innerHTML = `<b>${labels[view][0]}</b> · ${labels[view][1]}`;
-  $("modeInfo").textContent = `Ángulo actual: ${angle.toFixed(1)}° · longitud O–H: ${BOND_ANGSTROM.toFixed(4)} Å · momento dipolar: ${DIPOLE_DEBYE} D`;
+  $("modeInfo").textContent = `Ángulo actual: ${angle.toFixed(1)}° · longitud O–H: ${BOND_ANGSTROM.toFixed(4)} Å · momento dipolar: ${DIPOLE_DEBYE} D` +
+    (view === "density" ? ` · ${DENSITY_POINTS.toLocaleString("es")} muestras` : "");
   $("densityText").innerHTML = view === "density"
     ? "Los puntos son <b>muestras</b> de un esquema de densidad electrónica, no electrones individuales."
     : "La vista <b>Molécula</b> muestra núcleos y enlaces como bolas y varillas: no dibuja electrones individuales.";
@@ -314,5 +319,5 @@ requestAnimationFrame(frame);
 })();
 
 if (typeof module !== "undefined")
-  module.exports = { ANGLE_DEG, BOND_ANGSTROM, DIPOLE_DEBYE, waterGeometry, angleBetweenBonds };
+  module.exports = { ANGLE_DEG, BOND_ANGSTROM, DIPOLE_DEBYE, DENSITY_POINTS, waterGeometry, angleBetweenBonds };
 })();
