@@ -18,6 +18,8 @@
     contours: true,
     visible: new Set(),
     orbital: null,
+    heat: "category",
+    relativistic: true,
   };
 
   const mainV = new Viewer($("main"), { fill: 0.38, spin: 0.0012 });
@@ -84,17 +86,60 @@
     return "post-transition";
   }
 
+  function heatColor(t) {
+    // Escala azul -> cian -> amarillo -> rojo (0..1)
+    const c = Math.max(0, Math.min(1, t));
+    const r = Math.round(255 * Math.min(1, Math.max(0, 1.5 * c - 0.1)));
+    const g = Math.round(255 * Math.sin(Math.PI * Math.pow(c, 0.85)));
+    const b = Math.round(255 * Math.max(0, 1 - 1.5 * c));
+    return `rgba(${r},${g},${b},0.42)`;
+  }
+
+  function propValue(Z, mode) {
+    if (mode === "radius") return A.slaterRadius(Z, { relativistic: state.relativistic }).rAngstrom;
+    if (mode === "ie1") return A.IE1[Z - 1];
+    if (mode === "en") return A.PAULING_EN[Z - 1];
+    return null;
+  }
+
   // ---------- Renderizado de la Mini Tabla Periódica ----------
   function renderPeriodicTable() {
+    const mode = state.heat;
+    let minV = Infinity, maxV = -Infinity;
+    if (mode !== "category") {
+      for (let z = 1; z <= 118; z++) {
+        const v = propValue(z, mode);
+        if (v !== null && v !== undefined) {
+          if (v < minV) minV = v;
+          if (v > maxV) maxV = v;
+        }
+      }
+      const unit = mode === "radius" ? "Å" : mode === "ie1" ? "eV" : "";
+      $("ptLegend").innerHTML = `<span style="display:inline-block;width:64px;height:8px;vertical-align:middle;border-radius:3px;background:linear-gradient(90deg,rgba(0,0,255,.5),rgba(0,255,150,.5),rgba(255,220,0,.5),rgba(255,40,0,.5));margin-right:4px"></span>${minV.toFixed(2)}–${maxV.toFixed(2)} ${unit}`;
+    } else {
+      $("ptLegend").textContent = "Haz clic en cualquier elemento o usa ←/→";
+    }
+
     let h = '<div class="ptable-grid">';
     A.ELEMENTS.forEach((el) => {
       const pos = getGridPos(el.Z);
       const cat = getCategory(el.Z);
       const isSel = el.Z === state.Z;
+      let bgStyle = "", extraTitle = "";
+      if (mode !== "category") {
+        const v = propValue(el.Z, mode);
+        if (v !== null && v !== undefined && maxV > minV) {
+          bgStyle = `background:${heatColor((v - minV) / (maxV - minV))};`;
+          extraTitle = ` · ${v.toFixed(2)}`;
+        } else {
+          bgStyle = "background:#161b22;opacity:0.55;";
+          extraTitle = " · N/D";
+        }
+      }
       h += `<button class="pt-cell ${isSel ? "on" : ""} cat-${cat}"
               data-z="${el.Z}"
-              title="Z=${el.Z} ${el.sym} · ${el.name}"
-              style="grid-row:${pos.r}; grid-column:${pos.c};">
+              title="Z=${el.Z} ${el.sym} · ${el.name}${extraTitle}"
+              style="grid-row:${pos.r}; grid-column:${pos.c}; ${bgStyle}">
               <span class="pt-z">${el.Z}</span>
               <span class="pt-sym">${el.sym}</span>
             </button>`;
@@ -172,6 +217,24 @@
 
   $("optSlice").addEventListener("change", (e) => { state.slice = e.target.checked; renderMain(); });
   $("optNew").addEventListener("change", (e) => { state.highlight = e.target.checked; renderMain(); });
+  $("optRel").addEventListener("change", (e) => {
+    state.relativistic = e.target.checked;
+    if (state.heat === "radius") renderPeriodicTable();
+    renderLayers();
+    renderGallery();
+    renderMain();
+  });
+  $("ptHeat").addEventListener("change", (e) => {
+    state.heat = e.target.value;
+    renderPeriodicTable();
+  });
+  $("btnExportPNG").addEventListener("click", () => {
+    const el = A.ELEMENTS[state.Z - 1];
+    const name = state.orbital
+      ? `${el.sym}_${state.orbital.n}${A.LCH[state.orbital.l]}.png`
+      : `${el.sym}_Z${state.Z}.png`;
+    mainV.exportPNG(name, { transparent: true, scale: 2 });
+  });
   $("optQty").addEventListener("change", (e) => { state.qty = e.target.value; renderMain(); });
   $("optContour").addEventListener("change", (e) => { state.contours = e.target.checked; renderMain(); });
 
@@ -216,7 +279,11 @@
     if (o) {
       if (state.view === "cloud") {
         mainV.slice = 0;
-        mainV.setCloud(A.genOrbital(o.n, o.l, o.i, 30000));
+        const req = Viewer.genCloudAsync(
+          { type: "orbital", n: o.n, l: o.l, i: o.i, N: 30000 },
+          () => A.genOrbital(o.n, o.l, o.i, 30000),
+          (groups, id, latest) => { if (id === latest && state.view === "cloud" && state.orbital) mainV.setCloud(groups); }
+        );
       } else if (state.view === "field") {
         const pl = A.bestPlane(o.l, o.i);
         const rad = A.radial(o.n, o.l);
@@ -252,12 +319,24 @@
 
     if (state.view === "cloud") {
       mainV.slice = state.slice ? 0.06 : 0;
-      mainV.setCloud(A.genAtom(state.Z, { scale: state.scale, visible: state.visible, highlightNew: state.highlight, points: state.slice ? 160000 : 40000 }));
+      const pts = state.slice ? 160000 : 40000;
+      const atomOpts = {
+        scale: state.scale,
+        visible: Array.from(state.visible),
+        highlightNew: state.highlight,
+        relativistic: state.relativistic,
+        points: pts,
+      };
+      Viewer.genCloudAsync(
+        { type: "atom", kOrZ: state.Z, opts: atomOpts },
+        () => A.genAtom(state.Z, { ...atomOpts, visible: state.visible }),
+        (groups, id, latest) => { if (id === latest && state.view === "cloud" && !state.orbital) mainV.setCloud(groups); }
+      );
     } else if (state.view === "field") {
-      const shells = A.atomShells(state.Z, state.visible);
+      const shells = A.atomShells(state.Z, state.visible, { relativistic: state.relativistic });
       const maxR = Math.max(...shells.map(s => s.rmax), 5);
       fieldV.show({
-        key: `atom_${state.Z}_${state.scale}_${state.qty}_${Array.from(state.visible).join("-")}`,
+        key: `atom_${state.Z}_${state.scale}_${state.qty}_${state.relativistic ? 1 : 0}_${Array.from(state.visible).join("-")}`,
         type: "atom",
         shells: shells,
         qty: state.qty,
@@ -266,7 +345,7 @@
         contours: state.contours
       });
     } else if (state.view === "radial") {
-      const shells = A.atomShells(state.Z, state.visible);
+      const shells = A.atomShells(state.Z, state.visible, { relativistic: state.relativistic });
       const maxR = Math.max(...shells.map(s => s.rmax), 5);
       radialP.show({
         curves: shells.map(s => ({
@@ -305,11 +384,29 @@
     const prevSym = coreZ ? A.ELEMENTS[coreZ - 1].sym : null;
     const valElectrons = valenceSubs.reduce((a, s) => a + s.occ, 0);
 
+    const rad = A.slaterRadius(Z, { relativistic: state.relativistic });
+    const ie1 = A.IE1[Z - 1];
+    const en = A.PAULING_EN[Z - 1];
+    let relNote = "";
+    if (Z > 70) {
+      const sFac = (A.relFactor(Z, 0) * 100 - 100).toFixed(0);
+      const dFac = (A.relFactor(Z, 2) * 100 - 100).toFixed(0);
+      const extra = Z === 79
+        ? " En el <b>oro (Au)</b>, la contracción del 6s y expansión del 5d estrechan la brecha 5d→6s hasta el azul (~2.4 eV), ¡por eso absorbe azul y refleja amarillo dorado!"
+        : Z === 80
+        ? " En el <b>mercurio (Hg)</b>, el par 6s² se contrae y estabiliza tanto que apenas forma enlaces metálicos: por eso es líquido a temperatura ambiente."
+        : "";
+      relNote = `<div class="formula" style="border-left:3px solid #f0c000; padding-left:8px; margin-top:6px;">
+        <b>Efectos relativistas (Z=${Z} &gt; 70):</b> orbitales <i>s</i> ${sFac}% (contracción directa, v/c ≈ ${(Z/137.036).toFixed(2)}); <i>d</i> +${dFac}% (expansión indirecta).${extra}
+      </div>`;
+    }
+
     let h = `<h2>Electrones de valencia de ${el.name} (${el.sym})</h2>
       <div class="formula">
         ${prevSym ? `[${prevSym}] (${coreZ} e⁻) + <b>${valElectrons} e⁻</b> = <b>${Z} e⁻</b> total` : `<b>${Z} e⁻</b> (capa 1)`}<br>
-        Configuración externa: ${valenceSubs.map((s) => `<b>${s.lab}<sup>${s.occ}</sup></b>`).join(" ")}
-      </div>`;
+        Configuración externa: ${valenceSubs.map((s) => `<b>${s.lab}<sup>${s.occ}</sup></b>`).join(" ")}<br>
+        <small>Radio Slater: <b>${rad.rAngstrom.toFixed(2)} Å</b> · IE₁: <b>${ie1.toFixed(2)} eV</b> · χ Pauling: <b>${en !== null ? en.toFixed(2) : "—"}</b></small>
+      </div>${relNote}`;
 
     valenceSubs.forEach((s) => {
       h += `<div class="sub" style="border-color:${A.LCOLOR[s.l]}">

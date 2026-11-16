@@ -84,6 +84,13 @@
   $("pause").addEventListener("click", () => {
     Viewer.paused = !Viewer.paused; $("pause").textContent = Viewer.paused ? "▶" : "⏸";
   });
+  $("btnExportPNG").addEventListener("click", () => {
+    const g = A.NOBLES[state.k];
+    const name = state.orbital
+      ? `${g.sym}_${state.orbital.n}${A.LCH[state.orbital.l]}.png`
+      : `${g.sym}.png`;
+    mainV.exportPNG(name, { transparent: true, scale: 2 });
+  });
 
   // ---------- Visor principal ----------
   function renderMain() {
@@ -102,7 +109,11 @@
     if (o) {
       if (state.view === "cloud") {
         mainV.slice = 0;
-        mainV.setCloud(A.genOrbital(o.n, o.l, o.i, 30000));
+        Viewer.genCloudAsync(
+          { type: "orbital", n: o.n, l: o.l, i: o.i, N: 30000 },
+          () => A.genOrbital(o.n, o.l, o.i, 30000),
+          (groups, id, latest) => { if (id === latest && state.view === "cloud" && state.orbital) mainV.setCloud(groups); }
+        );
       } else if (state.view === "field") {
         const pl = A.bestPlane(o.l, o.i);
         const rad = A.radial(o.n, o.l);
@@ -138,9 +149,18 @@
 
     if (state.view === "cloud") {
       mainV.slice = state.slice ? 0.06 : 0;
-      // isNobleIndex: physics.js pasó a interpretar el número como Z (soporte de los 118
-      // elementos); esta vista sigue hablando de índices de gas noble (0 = He … 6 = Og).
-      mainV.setCloud(A.genAtom(state.k, { isNobleIndex: true, scale: state.scale, visible: state.visible, highlightNew: state.highlight, points: state.slice ? 160000 : 40000 }));
+      const atomOpts = {
+        isNobleIndex: true,
+        scale: state.scale,
+        visible: Array.from(state.visible),
+        highlightNew: state.highlight,
+        points: state.slice ? 160000 : 40000,
+      };
+      Viewer.genCloudAsync(
+        { type: "atom", kOrZ: state.k, opts: atomOpts },
+        () => A.genAtom(state.k, { ...atomOpts, visible: state.visible }),
+        (groups, id, latest) => { if (id === latest && state.view === "cloud" && !state.orbital) mainV.setCloud(groups); }
+      );
     } else if (state.view === "field") {
       const shells = A.atomShells(state.k, state.visible, { isNobleIndex: true });
       const maxR = Math.max(...shells.map(s => s.rmax), 5);

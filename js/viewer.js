@@ -48,16 +48,24 @@
       }, { passive: false });
     }
 
-    render() {
-      const c = this.canvas, ctx = this.ctx, dpr = window.devicePixelRatio || 1;
-      const W = c.clientWidth, H = c.clientHeight;
+    render(opts) {
+      opts = opts || {};
+      const c = opts.canvas || this.canvas, ctx = opts.ctx || this.ctx;
+      const dpr = opts.dpr || window.devicePixelRatio || 1;
+      const W = opts.W || c.clientWidth, H = opts.H || c.clientHeight;
       if (!W || !H) return;
       if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) {
         c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.globalAlpha = 1; ctx.fillStyle = this.bg; ctx.fillRect(0, 0, W, H);
-      if (!this.drag && !Viewer.paused) this.az += this.spin * Viewer.speed;
+      ctx.globalAlpha = 1;
+      if (opts.transparent) {
+        ctx.clearRect(0, 0, W, H);
+      } else {
+        ctx.fillStyle = this.bg;
+        ctx.fillRect(0, 0, W, H);
+      }
+      if (!opts.static && !this.drag && !Viewer.paused) this.az += this.spin * Viewer.speed;
 
       const ca = Math.cos(this.az), sa = Math.sin(this.az), ce = Math.cos(this.el), se = Math.sin(this.el);
       const cx = W / 2, cy = H / 2, S = Math.min(W, H) * this.fill * this.zoom;
@@ -92,6 +100,29 @@
         }
       }
     }
+
+    /** Exporta el frame actual a PNG (por defecto con fondo transparente y 2x resolución). */
+    exportPNG(filename, opts) {
+      opts = opts || {};
+      const W = this.canvas.clientWidth || 800;
+      const H = this.canvas.clientHeight || 600;
+      const scale = opts.scale || 2;
+      const off = document.createElement("canvas");
+      const ctx = off.getContext("2d");
+      this.render({
+        canvas: off,
+        ctx,
+        W,
+        H,
+        dpr: scale,
+        transparent: opts.transparent !== false,
+        static: true,
+      });
+      const a = document.createElement("a");
+      a.download = filename || "orbital.png";
+      a.href = off.toDataURL("image/png");
+      a.click();
+    }
   }
 
   function loop() {
@@ -104,5 +135,44 @@
 
   Viewer.speed = 1;     // multiplicador global de giro
   Viewer.paused = false;
+
+  // Cliente compartido para Web Worker de nubes densas (con fallback síncrono)
+  let _worker = null, _workerBroken = false, _reqId = 0;
+  const _pending = new Map();
+
+  Viewer.genCloudAsync = function (payload, fallbackFn, onDone) {
+    const id = ++_reqId;
+    if (_workerBroken || typeof Worker === "undefined") {
+      onDone(fallbackFn(), id, _reqId);
+      return id;
+    }
+    try {
+      if (!_worker) {
+        _worker = new Worker("js/cloud-worker.js");
+        _worker.onmessage = (e) => {
+          const cb = _pending.get(e.data.id);
+          _pending.delete(e.data.id);
+          if (!cb) return;
+          if (e.data.error) cb.onDone(cb.fallbackFn(), e.data.id, _reqId);
+          else cb.onDone(e.data.groups, e.data.id, _reqId);
+        };
+        _worker.onerror = () => {
+          _workerBroken = true;
+          for (const [pid, cb] of _pending.entries()) {
+            cb.onDone(cb.fallbackFn(), pid, _reqId);
+          }
+          _pending.clear();
+        };
+      }
+      _pending.set(id, { fallbackFn, onDone });
+      _worker.postMessage(Object.assign({ id }, payload));
+    } catch (_) {
+      _workerBroken = true;
+      onDone(fallbackFn(), id, _reqId);
+    }
+    return id;
+  };
+  Viewer.latestCloudReq = () => _reqId;
+
   root.Viewer = Viewer;
 })(window);
