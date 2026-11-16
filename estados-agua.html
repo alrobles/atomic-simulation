@@ -21,8 +21,9 @@
   button.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
   button.go{background:#1f6feb;border-color:#1f6feb;font-weight:600}
   #canvasWrap{position:relative;flex:1;min-height:0}
+  #fallback{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   #sim{position:absolute;inset:0;width:100%;height:100%;display:block}
-  #label{position:absolute;left:13px;top:10px;font-size:12px;color:#c9d1d9;pointer-events:none;text-shadow:0 1px 4px #000}
+  #label{position:absolute;left:13px;top:10px;font-size:12px;color:#c9d1d9;pointer-events:none;text-shadow:0 1px 4px #000;z-index:2}
   #legend{position:absolute;left:13px;bottom:10px;display:flex;gap:12px;font-size:11px;color:#8b949e;pointer-events:none;text-shadow:0 1px 4px #000}
   #legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
   #side{overflow-y:auto;padding:14px 16px;font-size:13px;line-height:1.5}
@@ -61,8 +62,25 @@
       <button id="btnReset">↺ rearmar</button>
     </div>
     <div id="canvasWrap">
+      <svg id="fallback" viewBox="0 0 600 400" role="img" aria-label="Dibujo de respaldo de moléculas de agua">
+        <g fill="none" stroke="#c9d1d9" stroke-width="4" stroke-linecap="round">
+          <path d="M140 120L122 98M140 120L160 100M220 95L198 75M220 95L241 74M312 126L291 104M312 126L333 104M405 92L384 70M405 92L426 70M486 132L465 109M486 132L507 110"/>
+          <path d="M110 220L89 198M110 220L131 199M202 199L182 178M202 199L223 178M300 230L279 208M300 230L321 208M410 204L389 182M410 204L431 182M500 230L479 209M500 230L521 209"/>
+          <path d="M150 320L129 298M150 320L171 299M253 315L232 293M253 315L274 293M360 323L339 301M360 323L381 301M464 320L443 298M464 320L485 298"/>
+        </g>
+        <g fill="#f85149">
+          <circle cx="140" cy="120" r="9"/><circle cx="220" cy="95" r="9"/><circle cx="312" cy="126" r="9"/><circle cx="405" cy="92" r="9"/><circle cx="486" cy="132" r="9"/>
+          <circle cx="110" cy="220" r="9"/><circle cx="202" cy="199" r="9"/><circle cx="300" cy="230" r="9"/><circle cx="410" cy="204" r="9"/><circle cx="500" cy="230" r="9"/>
+          <circle cx="150" cy="320" r="9"/><circle cx="253" cy="315" r="9"/><circle cx="360" cy="323" r="9"/><circle cx="464" cy="320" r="9"/>
+        </g>
+        <g fill="#e6edf3">
+          <circle cx="122" cy="98" r="5"/><circle cx="160" cy="100" r="5"/><circle cx="198" cy="75" r="5"/><circle cx="241" cy="74" r="5"/><circle cx="291" cy="104" r="5"/><circle cx="333" cy="104" r="5"/><circle cx="384" cy="70" r="5"/><circle cx="426" cy="70" r="5"/><circle cx="465" cy="109" r="5"/><circle cx="507" cy="110" r="5"/>
+          <circle cx="89" cy="198" r="5"/><circle cx="131" cy="199" r="5"/><circle cx="182" cy="178" r="5"/><circle cx="223" cy="178" r="5"/><circle cx="279" cy="208" r="5"/><circle cx="321" cy="208" r="5"/><circle cx="389" cy="182" r="5"/><circle cx="431" cy="182" r="5"/><circle cx="479" cy="209" r="5"/><circle cx="521" cy="209" r="5"/>
+          <circle cx="129" cy="298" r="5"/><circle cx="171" cy="299" r="5"/><circle cx="232" cy="293" r="5"/><circle cx="274" cy="293" r="5"/><circle cx="339" cy="301" r="5"/><circle cx="381" cy="301" r="5"/><circle cx="443" cy="298" r="5"/><circle cx="485" cy="298" r="5"/>
+        </g>
+      </svg>
       <canvas id="sim" aria-label="Simulación 2D de moléculas de agua"></canvas>
-      <div id="label"></div>
+      <div id="label">H₂O en movimiento · inicia la simulación para ver las interacciones</div>
       <div id="legend">
         <span><i style="background:#f85149"></i>O</span>
         <span><i style="background:#e6edf3"></i>H</span>
@@ -87,5 +105,6 @@
   </aside>
 </main>
 <script src="js/estados-agua.js"></script>
+<noscript><p class="note">Activa JavaScript para ejecutar la simulación; se muestra un dibujo de respaldo.</p></noscript>
 </body>
 </html>
