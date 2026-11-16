@@ -3,240 +3,1005 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbitales y gases nobles</title>
+<title>Del átomo a la estrella · simulaciones reales de física y química</title>
+<meta name="description" content="Ocho simuladores en español construidos sobre física de verdad: la ecuación de Schrödinger, 660 líneas de emisión del NIST y la cadena de fusión del Sol. Sin librerías, sin instalar y sin conexión.">
+<meta name="theme-color" content="#05070b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Del átomo a la estrella">
+<meta property="og:description" content="Ocho simuladores en español con física de verdad: orbitales, espectros, fusión nuclear, estrellas y agua. Sin librerías y sin conexión.">
+<meta property="og:locale" content="es_ES">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2305070b'/%3E%3Ccircle cx='16' cy='16' r='3.2' fill='%23f0c000'/%3E%3Cellipse cx='16' cy='16' rx='11' ry='4.6' fill='none' stroke='%234dabf7' stroke-width='1.6' transform='rotate(-28 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='11' ry='4.6' fill='none' stroke='%234dabf7' stroke-width='1.6' transform='rotate(62 16 16)'/%3E%3C/svg%3E">
 <style>
+  :root{
+    --space:#05070b;
+    --bg:#0d1117;
+    --line:#21262d;
+    --line2:#30363d;
+    --fg:#e6edf3;
+    --muted:#9aa4b0;
+    --dim:#7f8896;
+    --s:#ff6b6b; --p:#ffd43b; --d:#4dabf7; --f:#69db7c;
+    --gold:#f0c000;
+    --blue:#4dabf7;
+    --orange:#ff922b;
+    --link:#58a6ff;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,Segoe UI,sans-serif;background:#0d1117;color:#e6edf3;display:flex;height:100vh;overflow:hidden}
-  #left{flex:1.1;position:relative;min-width:0}
-  #cv{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
-  #info{position:absolute;top:12px;left:14px;right:14px;pointer-events:none;font-size:15px;line-height:1.45;text-shadow:0 0 4px #000}
-  #info .big{font-size:22px;font-weight:700}
-  #modes{position:absolute;bottom:14px;left:14px;display:flex;gap:6px}
-  #hint{position:absolute;bottom:18px;right:14px;font-size:12px;color:#8b949e}
-  button{background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 11px;font-size:14px;cursor:pointer}
-  button:hover{background:#30363d}
-  button.on{background:#1f6feb;border-color:#1f6feb}
-  #right{flex:1;overflow-y:auto;padding:14px 18px;border-left:1px solid #30363d;min-width:470px}
-  h1{font-size:20px;margin:0 0 8px}
-  #elem{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-  #sym{font-size:44px;font-weight:800;width:86px;height:86px;border:2px solid #30363d;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
-  #sym small{font-size:13px;font-weight:400;color:#8b949e}
-  #sym.noble{border-color:#f0c000;box-shadow:0 0 18px #f0c00088}
-  #conf{font-size:16px}
-  #conf .core{color:#8b949e;font-size:14px}
-  #badge{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;background:#f0c000;color:#000;font-weight:700;font-size:13px}
-  .ctrl{display:flex;gap:6px;align-items:center;margin:8px 0 12px;flex-wrap:wrap}
-  input[type=range]{flex:1;min-width:150px}
-  .row{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:5px;border:1px solid #21262d;border-radius:8px;transition:all .3s}
-  .row.active{border-color:#1f6feb}
-  .row.full{background:#f0c00014;border-color:#f0c00066}
-  .plabel{width:62px;font-size:12px;color:#8b949e}
-  .subs{flex:1;display:flex;gap:8px;flex-wrap:wrap}
-  .sub{border-left:3px solid;padding-left:5px}
-  .sub.l0{border-color:#ff6b6b}.sub.l1{border-color:#ffd43b}.sub.l2{border-color:#4dabf7}.sub.l3{border-color:#69db7c}
-  .slab{font-size:12px;font-weight:700}
-  .slab span{font-weight:400;color:#8b949e;margin-left:4px}
-  .boxes{display:flex;gap:2px;margin-top:2px}
-  .box{width:21px;height:21px;border:1px solid #484f58;border-radius:3px;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;letter-spacing:-2px}
-  .box:hover{border-color:#e6edf3}
-  .box.sel{outline:2px solid #1f6feb}
-  .box.last{background:#1f6feb44}
-  .psum{width:118px;text-align:right;font-size:12px;color:#8b949e}
-  .psum b{color:#e6edf3;font-size:14px}
-  .ng{margin-top:2px;font-size:12px;color:#6e7681}
-  .ng.on{color:#f0c000;font-weight:700}
-  #seq{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:12px 0;font-size:14px}
-  #seq .n{padding:3px 8px;border-radius:6px;border:1px solid #30363d}
-  #seq .n.on{background:#f0c000;color:#000;font-weight:700}
-  #seq .d{color:#8b949e;font-size:11px}
-  .exp{font-size:14px;line-height:1.5;color:#c9d1d9}
-  .exp b{color:#fff}
-  .legend span{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 3px 0 10px}
-  @media (max-width:900px){
-    body{flex-direction:column;height:auto;overflow:auto}
-    #left{flex:none;height:58vh;min-height:300px}
-    #right{min-width:0;border-left:0;border-top:1px solid #30363d}
-    #sym{width:64px;height:64px;font-size:34px}
-    #hint{display:none}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    margin:0;background:var(--space);color:var(--fg);font-family:var(--sans);
+    font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--link);text-decoration:none;text-underline-offset:3px}
+  a:hover{text-decoration:underline}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+  /* superficies del navegador: también son parte del diseño */
+  ::selection{background:#f0c00040;color:#fff}
+  html{scrollbar-color:#3d444d var(--space);scrollbar-width:thin}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-track{background:var(--space)}
+  ::-webkit-scrollbar-thumb{background:#2b3138;border-radius:6px;border:2px solid var(--space)}
+  ::-webkit-scrollbar-thumb:hover{background:#3d444d}
+  .stat b,.spec-axis,.orblabel,.hint{font-variant-numeric:tabular-nums}
+  .skip{position:absolute;left:-9999px;top:0;background:var(--gold);color:#000;padding:10px 14px;z-index:100;font-weight:600}
+  .skip:focus{left:8px;top:8px}
+
+  /* ---------- barra superior ---------- */
+  header.top{
+    position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;
+    padding:10px 20px;background:rgba(5,7,11,.78);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em;color:var(--fg)}
+  .brand:hover{text-decoration:none}
+  .brand svg{flex:none}
+  .brand b{font-size:15px;white-space:nowrap}
+  .brand span{font-weight:400;color:var(--dim);font-size:12px;white-space:nowrap;display:none}
+  @media (min-width:620px){.brand span{display:inline}}
+  nav.top-nav{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:13.5px}
+  nav.top-nav a{color:var(--muted);padding:6px 9px;border-radius:7px;white-space:nowrap}
+  nav.top-nav a:hover{color:var(--fg);background:#161b22;text-decoration:none}
+  nav.top-nav a.gh{color:var(--fg);border:1px solid var(--line2);margin-left:6px}
+  nav.top-nav a.gh:hover{border-color:#4d5560}
+  @media (max-width:600px){nav.top-nav a.hide-sm{display:none}}
+
+  /* ---------- héroe ---------- */
+  .hero{
+    position:relative;min-height:min(88svh,760px);display:grid;place-items:center;
+    padding:56px 20px 64px;overflow:hidden;text-align:center;
+  }
+  /* estrellas: puro CSS, sin coste de render */
+  .hero::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(1.4px 1.4px at 12% 18%,#ffffff8c,transparent 55%),
+      radial-gradient(1.2px 1.2px at 26% 62%,#ffffff6b,transparent 55%),
+      radial-gradient(1.6px 1.6px at 41% 27%,#ffffffa3,transparent 55%),
+      radial-gradient(1.2px 1.2px at 57% 74%,#ffffff59,transparent 55%),
+      radial-gradient(1.5px 1.5px at 68% 21%,#ffffffe0,transparent 55%),
+      radial-gradient(1.2px 1.2px at 82% 55%,#ffffff73,transparent 55%),
+      radial-gradient(1.7px 1.7px at 91% 33%,#ffffffb3,transparent 55%),
+      radial-gradient(1.3px 1.3px at 8% 82%,#ffffff6b,transparent 55%),
+      radial-gradient(1.3px 1.3px at 47% 92%,#ffffff80,transparent 55%),
+      radial-gradient(1.2px 1.2px at 74% 88%,#ffffff66,transparent 55%),
+      radial-gradient(1000px 520px at 50% 8%,#1f6feb1f,transparent 70%),
+      radial-gradient(760px 420px at 82% 84%,#f0c00012,transparent 70%);
+  }
+  #heroCloud{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .hero-inner{position:relative;max-width:820px;z-index:2}
+  .hero-scrim{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(940px,120vw);height:min(560px,80svh);
+    background:radial-gradient(closest-side,rgba(5,7,11,.68),rgba(5,7,11,.3) 60%,transparent 100%);
+    pointer-events:none;z-index:1;
+  }
+  .hero-scrim{width:min(940px,100%)}
+  h1{
+    font-size:clamp(2.4rem,7.2vw,4.4rem);line-height:1.02;margin:0 0 18px;
+    letter-spacing:-.035em;font-weight:800;
+  }
+  h1 em{font-style:normal;color:var(--gold)}
+  .lede{font-size:clamp(1rem,2.4vw,1.2rem);color:#c3ccd6;max-width:640px;margin:0 auto 12px}
+  .lede b{color:#fff;font-weight:600}
+  .orblabel{
+    font-family:var(--mono);font-size:12.5px;color:var(--muted);min-height:1.6em;
+    margin:0 auto 26px;letter-spacing:.01em;
+  }
+  .orblabel b{color:var(--d);font-weight:600}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;
+    font-weight:600;font-size:15px;border:1px solid transparent;transition:transform .18s,background .18s,border-color .18s;
+  }
+  .btn:hover{text-decoration:none;transform:translateY(-2px)}
+  .btn-primary{background:var(--fg);color:#05070b}
+  .btn-primary:hover{background:#fff}
+  .btn-ghost{background:#0d1117;border-color:var(--line2);color:var(--fg)}
+  .btn-ghost:hover{border-color:#4d5560;background:#161b22}
+  .scroll-cue{
+    position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:var(--mono);
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);z-index:2;
+  }
+  .scroll-cue i{display:block;width:1px;height:26px;margin:8px auto 0;background:linear-gradient(var(--dim),transparent)}
+
+  /* ---------- secciones ---------- */
+  section.band{padding:72px 20px;max-width:1180px;margin:0 auto;scroll-margin-top:40px}
+  .band-head{max-width:660px;margin-bottom:46px}
+  h2{font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.12;letter-spacing:-.025em;margin:0 0 14px;font-weight:750}
+  .band-head p{color:var(--muted);margin:0;font-size:1.02rem}
+  .band-head p b{color:#dbe3ea}
+
+  /* ---------- la cadena ---------- */
+  .timeline{position:relative;padding-left:0}
+  .act{position:relative;display:grid;gap:22px;grid-template-columns:1fr}
+  @media (min-width:900px){.act{grid-template-columns:196px 1fr;gap:34px}}
+  .act + .act{margin-top:52px}
+  .act-rail{position:relative}
+  @media (min-width:900px){
+    .act-rail{padding-top:2px}
+    .timeline::before{
+      content:"";position:absolute;left:196px;top:6px;bottom:6px;width:1px;
+      background:linear-gradient(180deg,transparent,var(--line2) 8%,var(--line2) 92%,transparent);
+    }
+    .act-rail::after{
+      content:"";position:absolute;right:0;top:11px;width:9px;height:9px;border-radius:50%;
+      background:var(--space);border:2px solid var(--gold);transform:translateX(50%);z-index:2;
+    }
+  }
+  .act-num{font-size:12px;font-weight:600;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+  .act-title{font-size:1.06rem;font-weight:700;margin:4px 0 4px;letter-spacing:-.01em}
+  .act-sub{font-size:13px;color:var(--dim);margin:0;line-height:1.5}
+  .cards{display:grid;gap:18px;grid-template-columns:1fr}
+  @media (min-width:680px){.cards{grid-template-columns:repeat(2,1fr)}}
+  @media (min-width:1080px){.cards.cols-3{grid-template-columns:repeat(3,1fr)}}
+
+  .card{
+    display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--line);
+    border-radius:16px;overflow:hidden;color:var(--fg);position:relative;
+    transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+  }
+  .card:hover{transform:translateY(-4px);border-color:#3d444d;box-shadow:0 18px 40px -18px #000,0 0 0 1px #ffffff0a}
+  .card:hover .art{transform:scale(1.035)}
+  .art{
+    position:relative;aspect-ratio:16/10;background:
+      radial-gradient(340px 200px at 70% 20%,#ffffff0a,transparent 70%),#0a0e14;
+    border-bottom:1px solid var(--line);overflow:hidden;display:block;
+    transition:transform .5s cubic-bezier(.2,.7,.3,1);transform-origin:50% 45%;
+  }
+  .art svg,.art canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* la ilustración vive sobre una franja reservada para el pie de figura: nunca lo pisa */
+  .art .fig{position:absolute;inset:0 0 22px 0;display:block;overflow:hidden}
+  .art .fig > svg,.art .fig > canvas{position:static;width:100%;height:100%;display:block}
+  .art .hint{
+    position:absolute;left:12px;bottom:3px;right:12px;font-family:var(--mono);font-size:11px;
+    color:#aab4bf;letter-spacing:.01em;z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .card-body{padding:16px 17px 17px;display:flex;flex-direction:column;flex:1;gap:7px}
+  .card-tag{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .card-body h3{margin:0;font-size:1.12rem;letter-spacing:-.015em;font-weight:700;line-height:1.25}
+  .card-body p{margin:0;font-size:14.2px;color:var(--muted);line-height:1.55}
+  .card-body p b{color:#dbe3ea;font-weight:600}
+  .card-go{
+    margin-top:auto;padding-top:11px;font-size:13.5px;font-weight:600;color:var(--link);
+    display:flex;align-items:center;gap:6px;
+  }
+  .card-go i{font-style:normal;transition:transform .2s}
+  .card:hover .card-go i{transform:translateX(4px)}
+  .card:focus-within{border-color:var(--gold)}
+  /* un solo enlace por tarjeta, que cubre toda la superficie */
+  .card .hit{position:absolute;inset:0;z-index:4}
+  .card .hit:focus-visible{outline-offset:-3px}
+
+  /* espectro de la tarjeta */
+  .spec{display:flex;flex-direction:column;height:100%}
+  .spec-band{position:relative;flex:1;margin:14px 12px 0;border-radius:8px;overflow:hidden;background:#0a0e14;border:1px solid #1b2027}
+  .spec-uv,.spec-ir{position:absolute;top:0;bottom:0;background:linear-gradient(180deg,#12171e,#0e1319)}
+  .spec-uv{left:0;width:16.25%}   /* 250→380 nm de 250→1050 */
+  .spec-ir{right:0;width:33.75%}  /* 780→1050 nm */
+  .spec-vis{position:absolute;top:0;bottom:0;left:16.25%;right:33.75%;background:linear-gradient(90deg,#3a0a5a,#6d28d9,#2563eb,#06b6d4,#22c55e,#eab308,#f97316,#dc2626,#5b0d0d);opacity:.9}
+  .spec-lines{position:absolute;inset:0}
+  .spec-lines i{position:absolute;bottom:0;width:1.6px;border-radius:1px;transform:translateX(-50%);background:#fff}
+  .spec-axis{display:flex;justify-content:space-between;margin:6px 12px 0;font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .spec-gases{display:flex;gap:6px;margin:9px 12px 12px;flex-wrap:wrap}
+  .spec-gases button{
+    font-family:var(--mono);font-size:12px;padding:4px 9px;border-radius:7px;cursor:pointer;
+    background:#161b22;color:var(--muted);border:1px solid var(--line2);
+  }
+  .spec-gases button:hover{color:var(--fg)}
+  .spec-gases button[aria-pressed=true]{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
+
+  /* ---------- ciencia de verdad ---------- */
+  .stats{display:grid;gap:14px;grid-template-columns:1fr}
+  @media (min-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+  @media (min-width:1000px){.stats{grid-template-columns:repeat(4,1fr)}}
+  .stat{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px 17px}
+  .stat b{display:block;font-family:var(--mono);font-size:1.55rem;letter-spacing:-.02em;color:var(--gold);font-weight:700}
+  .stat span{display:block;font-size:13.4px;color:var(--muted);margin-top:5px;line-height:1.5}
+  .truth{
+    margin-top:30px;background:var(--bg);border:1px solid var(--line);
+    border-radius:14px;padding:20px 22px;
+  }
+  .truth h3{margin:0 0 10px;font-size:1.02rem;letter-spacing:-.01em}
+  .truth h3::before{
+    content:"";display:inline-block;width:8px;height:8px;background:var(--blue);
+    border-radius:2px;margin-right:10px;vertical-align:middle;
+  }
+  .truth ul{margin:0;padding-left:20px;color:var(--muted);font-size:14.2px}
+  .truth li{margin:6px 0}
+  .truth li b{color:#dbe3ea}
+  .truth p.small{font-family:var(--mono);font-size:13px;color:var(--muted);margin:14px 0 0}
+
+  /* ---------- rutas ---------- */
+  .routes{display:grid;gap:16px;grid-template-columns:1fr}
+  @media (min-width:820px){.routes{grid-template-columns:repeat(3,1fr)}}
+  .route{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px 19px;display:flex;flex-direction:column;gap:9px}
+  .route .rt{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .route h3{margin:0;font-size:1.05rem;letter-spacing:-.01em}
+  .route p{margin:0;font-size:14px;color:var(--muted)}
+  .route ol{margin:6px 0 0;padding-left:19px;font-size:14px;color:var(--muted)}
+  .route li{margin:3px 0}
+  .route .go{margin-top:auto;padding-top:12px;font-size:13.5px;font-weight:600}
+
+  footer.foot{
+    border-top:1px solid var(--line);padding:34px 20px 44px;color:var(--dim);font-size:13.5px;
+  }
+  .foot-in{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center}
+  .foot-in p{margin:0}
+  .foot-in nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
+  .foot-in a{color:var(--muted)}
+
+  @media (prefers-reduced-motion:reduce){
+    .card,.art,.card-go i{transition:none}
+    .card:hover{transform:none}
   }
 </style>
 </head>
 <body>
-<div id="left">
-  <canvas id="cv"></canvas>
-  <div id="info"></div>
-  <div id="modes">
-    <button id="mOrb" class="on">Un orbital</button>
-    <button id="mAtom">Átomo completo</button>
+<a class="skip" href="#cadena">Saltar al contenido</a>
+
+<header class="top">
+  <a class="brand" href="#top">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="3.2" fill="#f0c000"/>
+      <ellipse cx="16" cy="16" rx="11" ry="4.6" fill="none" stroke="#4dabf7" stroke-width="1.6" transform="rotate(-28 16 16)"/>
+      <ellipse cx="16" cy="16" rx="11" ry="4.6" fill="none" stroke="#4dabf7" stroke-width="1.6" transform="rotate(62 16 16)"/>
+    </svg>
+    <b>Del átomo a la estrella</b>
+    <span>simulaciones de física y química</span>
+  </a>
+  <nav class="top-nav" aria-label="Navegación principal">
+    <a href="#cadena" class="hide-sm">La cadena</a>
+    <a href="#ciencia" class="hide-sm">La ciencia</a>
+    <a href="#rutas">Por dónde empezar</a>
+    <a class="gh" href="https://github.com/alrobles/atomic-simulation" target="_blank" rel="noopener">GitHub ↗</a>
+  </nav>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <canvas id="heroCloud" aria-hidden="true"></canvas>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <h1>Del átomo<br>a la <em>estrella</em></h1>
+      <p class="lede">Simuladores en español y con física de verdad. Cuentan la misma historia por partes: <b>cómo se llena un átomo</b>, <b>qué luz emite</b>, <b>cómo se fusiona</b> su núcleo y <b>qué le pasa a una estrella</b> cuando eso ocurre durante miles de millones de años.</p>
+      <p class="orblabel" id="orbLabel">Cargando orbital…</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#cadena">Ver las vistas</a>
+        <a class="btn btn-ghost" href="#ciencia">¿Está bien la física?</a>
+      </div>
+    </div>
+    <p class="scroll-cue">Desliza<i></i></p>
   </div>
-  <div id="hint">Arrastra para girar · rueda para zoom</div>
-</div>
 
-<div id="right">
-  <h1>¿De dónde salen 2, 10, 18, 36, 54, 86, 118?</h1>
-  <p style="margin:-4px 0 10px;font-size:12px"><a href="orbitales.html" style="color:#58a6ff;text-decoration:none">→ gases nobles: nube 3D, campo de densidad y distribución radial</a> · <a href="espectro.html" style="color:#58a6ff;text-decoration:none">espectro de emisión</a> · <a href="fusion.html" style="color:#58a6ff;text-decoration:none">fusión nuclear</a> · <a href="estrella.html" style="color:#58a6ff;text-decoration:none">vida estelar →</a></p>
-  <div id="elem">
-    <div id="sym">H<small>Z=1</small></div>
-    <div><div id="conf"></div><div id="badgeBox"></div></div>
+  <!-- ============ LA CADENA ============ -->
+  <section class="band" id="cadena">
+    <div class="band-head">
+      <h2>Del electrón a la estrella, en seis actos</h2>
+      <p>Cada vista es un simulador independiente, pero todas comparten los mismos colores: <b style="color:var(--s)">s</b>, <b style="color:var(--p)">p</b>, <b style="color:var(--d)">d</b> y <b style="color:var(--f)">f</b> significan lo mismo en todas partes. Puedes empezar por donde quieras.</p>
+    </div>
+
+    <div class="timeline">
+      <!-- ACTO 1 -->
+      <div class="act">
+        <div class="act-rail">
+          <p class="act-num">Acto 1</p>
+          <p class="act-title">Dentro del átomo</p>
+          <p class="act-sub">Dónde puede estar un electrón, y por qué los números 2, 10, 18, 36, 54, 86 y 118 son especiales.</p>
+        </div>
+        <div class="cards cols-3">
+
+          <a class="card" href="llenado.html">
+            <span class="art" aria-hidden="false">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Cajitas de orbitales 3p, 4s y 3d con flechas de espín, y una flecha que muestra que el 4s se llena antes que el 3d">
+                <g font-family="ui-monospace,Menlo,monospace" font-size="12">
+                  <text x="16" y="47" fill="#9aa4b0">3p</text>
+                  <text x="16" y="95" fill="#9aa4b0">4s</text>
+                  <text x="16" y="143" fill="#9aa4b0">3d</text>
+                </g>
+                <g fill="none" stroke="#30363d">
+                  <rect x="50" y="32" width="26" height="26" rx="4"/><rect x="80" y="32" width="26" height="26" rx="4"/><rect x="110" y="32" width="26" height="26" rx="4"/>
+                  <rect x="50" y="80" width="26" height="26" rx="4"/>
+                  <rect x="50" y="128" width="26" height="26" rx="4"/><rect x="80" y="128" width="26" height="26" rx="4"/><rect x="110" y="128" width="26" height="26" rx="4"/><rect x="140" y="128" width="26" height="26" rx="4"/><rect x="170" y="128" width="26" height="26" rx="4"/>
+                </g>
+                <g font-family="ui-monospace,Menlo,monospace" font-size="15" text-anchor="middle">
+                  <g fill="#ffd43b"><text x="63" y="51">↑↓</text><text x="93" y="51">↑↓</text><text x="123" y="51">↑↓</text></g>
+                  <g fill="#ff6b6b"><text x="63" y="99">↑↓</text></g>
+                  <g fill="#4dabf7"><text x="63" y="147">↑</text><text x="93" y="147">↑</text><text x="123" y="147">↑</text><text x="153" y="147">↑</text><text x="183" y="147">↑</text></g>
+                </g>
+                <path d="M78 93 q44 -6 68 30" fill="none" stroke="#f0c000" stroke-width="1.6" stroke-dasharray="4 3"/>
+                <path d="M146 123 l-9 -2 l3 8 z" fill="#f0c000"/>
+              </svg>
+              <span class="hint">Regla n + l: el 4s antes que el 3d</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Átomo · 118 elementos</span>
+              <h3>Llenado electrónico</h3>
+              <p>El átomo se llena electrón por electrón con el deslizador. De ahí salen los números <b>2, 10, 18, 36, 54, 86 y 118</b>.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+
+          <a class="card" href="orbitales.html">
+            <span class="art">
+              <canvas data-cloud="3,2,2" data-points="4200" aria-hidden="true"></canvas>
+              <span class="hint">3d<sub>z²</sub> real: dos fases, no una órbita</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Átomo · gases nobles</span>
+              <h3>Nubes y orbitales</h3>
+              <p>Cómo es <b>de verdad</b> un orbital: una nube de probabilidad, no una órbita. Con corte por fases, campo de densidad y distribución radial.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+
+          <a class="card" href="orbitales_all.html">
+            <span class="art">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Mapa de la tabla periódica con el color del último subnivel">
+                <g id="ptMini" font-family="ui-monospace,Menlo,monospace" font-size="7.4" text-anchor="middle"></g>
+              </svg>
+              <span class="hint">118 elementos por su último subnivel</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Átomo · Z = 1…118</span>
+              <h3>Todos los elementos</h3>
+              <p>La misma nube para cualquier elemento de la tabla, con la carga nuclear efectiva de cada capa (reglas de Slater).</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ACTO 2 -->
+      <div class="act">
+        <div class="act-rail">
+          <p class="act-num">Acto 2</p>
+          <p class="act-title">La luz que emite</p>
+          <p class="act-sub">Un electrón que cae de nivel anuncia su caída con un fotón. Cada elemento tiene su huella luminosa.</p>
+        </div>
+        <div class="cards">
+          <a class="card" href="espectro.html">
+            <span class="art">
+              <span class="spec">
+                <span class="spec-band">
+                  <span class="spec-uv" aria-hidden="true"></span>
+                  <span class="spec-vis" aria-hidden="true"></span>
+                  <span class="spec-ir" aria-hidden="true"></span>
+                  <span class="spec-lines" id="specLines" aria-hidden="true"></span>
+                </span>
+                <span class="spec-axis" aria-hidden="true"><span>250 nm · UV</span><span>visible</span><span>IR · 1050 nm</span></span>
+                <span class="spec-gases" id="specGases"></span>
+              </span>
+              <span class="hint" id="specHint">Líneas reales del NIST</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Luz · NIST ASD</span>
+              <h3>Espectro de emisión</h3>
+              <p>Por qué el neón brilla rojo y el argón azul, cómo un campo magnético parte cada línea por <b>efecto Zeeman</b>, y por qué la mayoría de esas líneas <b>no tienen color</b>: son ultravioleta o infrarrojo, y por eso se dibujan en gris.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+          <a class="card" href="superposicion.html">
+            <span class="art">
+              <svg viewBox="0 0 320 200" role="img" aria-label="La densidad electrónica oscilando entre dos orbitales, con el dipolo oscilante y la frecuencia de Bohr">
+                <line x1="24" y1="104" x2="300" y2="104" stroke="#2b3138" stroke-width="1"/>
+                <path d="M28 104 Q44 68 60 68 T92 104 T124 140 T156 104 T188 68 T220 104 T252 140 T284 104"
+                      fill="none" stroke="#ff922b" stroke-width="1.9" stroke-linecap="round"/>
+                <g fill="#4dabf7" opacity=".28">
+                  <ellipse cx="60" cy="68" rx="13" ry="9"/><ellipse cx="188" cy="68" rx="13" ry="9"/>
+                </g>
+                <g fill="#ff6b6b" opacity=".28">
+                  <ellipse cx="124" cy="140" rx="13" ry="9"/><ellipse cx="252" cy="140" rx="13" ry="9"/>
+                </g>
+                <g fill="#4dabf7"><circle cx="60" cy="68" r="2.6"/><circle cx="188" cy="68" r="2.6"/></g>
+                <g fill="#ff6b6b"><circle cx="124" cy="140" r="2.6"/><circle cx="252" cy="140" r="2.6"/></g>
+                <g font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9aa4b0">
+                  <text x="26" y="54">⟨z⟩(t)</text>
+                  <text x="176" y="184">ω = (E₂ − E₁)/ℏ</text>
+                </g>
+                <line x1="286" y1="176" x2="302" y2="176" stroke="#3d444d"/>
+              </svg>
+              <span class="hint">Emite a la frecuencia de Bohr</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Luz · el mecanismo</span>
+              <h3>Superposición temporal</h3>
+              <p>Cómo oscila la densidad electrónica |Ψ|² entre dos orbitales y produce un dipolo eléctrico oscilante que emite radiación.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ACTO 3 -->
+      <div class="act">
+        <div class="act-rail">
+          <p class="act-num">Acto 3</p>
+          <p class="act-title">El corazón del Sol</p>
+          <p class="act-sub">Cuatro núcleos de hidrógeno se convierten en uno de helio. La masa que falta se vuelve luz.</p>
+        </div>
+        <div class="cards">
+          <a class="card" href="fusion.html">
+            <span class="art" aria-hidden="false">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Diagrama de la cadena protón-protón: cuatro protones producen helio-4, dos positrones, dos neutrinos y energía">
+                <g stroke="#2b3138" stroke-width="1">
+                  <line x1="0" y1="150" x2="320" y2="150"/>
+                </g>
+                <g>
+                  <circle cx="46" cy="118" r="8" fill="#ff6b6b" opacity=".9"/>
+                  <circle cx="66" cy="132" r="8" fill="#ff6b6b" opacity=".9"/>
+                  <circle cx="46" cy="146" r="8" fill="#ff6b6b" opacity=".75"/>
+                  <circle cx="70" cy="158" r="8" fill="#ff6b6b" opacity=".75"/>
+                  <text x="30" y="104" fill="#9aa4b0" font-family="ui-monospace,Menlo,monospace" font-size="10.5">4 p</text>
+                </g>
+                <path d="M92 138 h44" stroke="#f0c000" stroke-width="1.4" stroke-dasharray="5 4"/>
+                <path d="M140 138 l-9 -4.5 l0 9 z" fill="#f0c000"/>
+                <text x="96" y="130" fill="#f0c000" font-family="ui-monospace,Menlo,monospace" font-size="10.5">p + p → d</text>
+                <g>
+                  <circle cx="214" cy="132" r="21" fill="none" stroke="#4dabf7" stroke-width="2"/>
+                  <circle cx="214" cy="132" r="8" fill="#4dabf7" opacity=".55"/>
+                  <text x="214" y="176" fill="#e6edf3" font-family="ui-monospace,Menlo,monospace" font-size="12" text-anchor="middle">⁴He</text>
+                </g>
+                <g font-family="ui-monospace,Menlo,monospace" font-size="10.5">
+                  <circle cx="168" cy="72" r="3" fill="#fff"/><text x="176" y="76" fill="#fff">ν ×2</text>
+                  <circle cx="236" cy="70" r="3" fill="#ff922b"/><text x="244" y="74" fill="#ff922b">e⁺ ×2</text>
+                  <text x="176" y="98" fill="#f0c000">γ · 26,7 MeV</text>
+                </g>
+              </svg>
+              <span class="hint">Fusionarse es raro: el Sol dura</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Núcleo · E = mc²</span>
+              <h3>Fusión nuclear</h3>
+              <p>La cadena protón-protón paso a paso: la barrera que casi nunca se cruza, los <b>26,7 MeV</b> y los neutrinos que escapan sin más.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ACTO 4 -->
+      <div class="act">
+        <div class="act-rail">
+          <p class="act-num">Acto 4</p>
+          <p class="act-title">La vida de una estrella</p>
+          <p class="act-sub">La misma fusión, repetida durante miles de millones de años, decide cómo nace y cómo muere una estrella.</p>
+        </div>
+        <div class="cards">
+          <a class="card" href="estrella.html">
+            <span class="art" aria-hidden="false">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Diagrama de Hertzsprung-Russell con la secuencia principal y trazas evolutivas">
+                <g stroke="#2b3138"><line x1="46" y1="18" x2="46" y2="168"/><line x1="46" y1="168" x2="300" y2="168"/></g>
+                <text x="10" y="96" fill="#9aa4b0" font-family="ui-monospace,Menlo,monospace" font-size="10">L ↑</text>
+                <text x="262" y="188" fill="#9aa4b0" font-family="ui-monospace,Menlo,monospace" font-size="10">T →</text>
+                <path d="M76 44 C130 84 168 116 268 142" fill="none" stroke="#4dabf7" stroke-width="9" opacity=".18"/>
+                <path d="M76 44 C130 84 168 116 268 142" fill="none" stroke="#4dabf7" stroke-width="1.2" opacity=".5"/>
+                <g>
+                  <circle cx="132" cy="92" r="4.5" fill="#ffd43b"/><text x="140" y="88" fill="#e6edf3" font-family="ui-monospace,Menlo,monospace" font-size="10">Sol</text>
+                  <circle cx="90" cy="56" r="4" fill="#9aa4b0"/><text x="98" y="52" fill="#c3ccd6" font-family="ui-monospace,Menlo,monospace" font-size="10">Sirio</text>
+                  <circle cx="228" cy="128" r="5.5" fill="#ff6b6b"/><text x="236" y="124" fill="#ff6b6b" font-family="ui-monospace,Menlo,monospace" font-size="10">Betelgeuse</text>
+                </g>
+                <path d="M132 92 C118 74 96 62 88 50" fill="none" stroke="#f0c000" stroke-width="1.3" stroke-dasharray="4 3"/>
+                <text x="150" y="150" fill="#9aa4b0" font-family="ui-monospace,Menlo,monospace" font-size="10">secuencia principal</text>
+              </svg>
+              <span class="hint">La masa decide el destino final</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Estrella · H-R</span>
+              <h3>Vida estelar</h3>
+              <p>Un diagrama de Hertzsprung-Russell en vivo: cambia la masa y mira <b>cuánto vive</b> y en qué acaba, desde una enana roja a un agujero negro.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ACTO 5 -->
+      <div class="act">
+        <div class="act-rail">
+          <p class="act-num">Acto 5</p>
+          <p class="act-title">Y de ahí, la química</p>
+          <p class="act-sub">Los elementos que fabricaron las estrellas se enlazan entre sí. Casi toda esa química empieza con un enlace y un ángulo.</p>
+        </div>
+        <div class="cards cols-3">
+          <a class="card" href="quimica.html">
+            <span class="art">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Curva de energía de un orbital molecular enlazante y otro antienlazante frente a la distancia internuclear">
+                <g stroke="#2b3138"><line x1="44" y1="16" x2="44" y2="162"/><line x1="44" y1="162" x2="302" y2="162"/></g>
+                <line x1="44" y1="112" x2="302" y2="112" stroke="#3d444d" stroke-width="1" stroke-dasharray="4 3"/>
+                <path d="M58 24 C92 88, 116 148, 152 152 C196 156, 240 128, 300 112"
+                      fill="none" stroke="#4dabf7" stroke-width="2" stroke-linecap="round"/>
+                <path d="M58 8 C124 56, 210 96, 300 110"
+                      fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 4"/>
+                <circle cx="152" cy="152" r="3.6" fill="#f0c000"/>
+                <g font-family="ui-monospace,Menlo,monospace" font-size="11">
+                  <text x="196" y="100" fill="#4dabf7">σ ₁s</text>
+                  <text x="238" y="82" fill="#ff6b6b">σ*₁s</text>
+                  <text x="48" y="128" fill="#7f8896" font-size="10">átomos separados</text>
+                  <text x="18" y="90" fill="#9aa4b0">E</text>
+                  <text x="272" y="178" fill="#9aa4b0">R</text>
+                  <text x="120" y="176" fill="#f0c000" font-size="10">R de equilibrio</text>
+                </g>
+              </svg>
+              <span class="hint">Enlazante baja la energía; σ* la sube</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Enlace · Hibridación &amp; LCAO-MO</span>
+              <h3>Química cuántica</h3>
+              <p>Hibridación interactiva (sp, sp², sp³, sp³d, sp³d²) y orbitales moleculares σ₁ₛ / σ₁ₛ* de H₂⁺ con distancia internuclear R variable.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+
+          <a class="card" href="agua.html">
+            <span class="art" aria-hidden="false">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Molécula de agua con su ángulo de 104,5 grados y sus cargas parciales">
+                <g>
+                  <line x1="160" y1="98" x2="106" y2="146" stroke="#30363d" stroke-width="2"/>
+                  <line x1="160" y1="98" x2="214" y2="146" stroke="#30363d" stroke-width="2"/>
+                  <circle cx="160" cy="98" r="25" fill="#ff6b6b" opacity=".22"/>
+                  <circle cx="160" cy="98" r="25" fill="none" stroke="#ff6b6b" stroke-width="1.4"/>
+                  <circle cx="106" cy="146" r="15" fill="#4dabf7" opacity=".22"/>
+                  <circle cx="106" cy="146" r="15" fill="none" stroke="#4dabf7" stroke-width="1.4"/>
+                  <circle cx="214" cy="146" r="15" fill="#4dabf7" opacity=".22"/>
+                  <circle cx="214" cy="146" r="15" fill="none" stroke="#4dabf7" stroke-width="1.4"/>
+                </g>
+                <g font-family="ui-monospace,Menlo,monospace" text-anchor="middle">
+                  <text x="160" y="103" fill="#ff6b6b" font-size="14" font-weight="700">O</text>
+                  <text x="106" y="151" fill="#4dabf7" font-size="12" font-weight="700">H</text>
+                  <text x="214" y="151" fill="#4dabf7" font-size="12" font-weight="700">H</text>
+                  <text x="102" y="82" fill="#ff6b6b" font-size="10" font-weight="700">δ⁻</text>
+                  <text x="88" y="118" fill="#9aa4b0" font-size="9">δ⁺</text>
+                  <text x="238" y="118" fill="#9aa4b0" font-size="9">δ⁺</text>
+                </g>
+                <path d="M116 141 A 52 52 0 0 1 204 141" fill="none" stroke="#f0c000" stroke-width="1.3" stroke-dasharray="4 3"/>
+                <text x="160" y="176" fill="#f0c000" font-family="ui-monospace,Menlo,monospace" font-size="11" text-anchor="middle">104,5°</text>
+                <text x="160" y="34" fill="#9aa4b0" font-family="ui-monospace,Menlo,monospace" font-size="10.5" text-anchor="middle">dos pares de electrones libres</text>
+                <circle cx="143" cy="60" r="3" fill="#69db7c" opacity=".8"/><circle cx="177" cy="60" r="3" fill="#69db7c" opacity=".8"/>
+              </svg>
+              <span class="hint">Por qué el agua es líquida: 104,5°</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Química · enlace</span>
+              <h3>La molécula de agua</h3>
+              <p>Covalente pero polar: el oxígeno tira de los electrones y deja dos <b>polos con carga</b>. De ahí sale casi toda la química del planeta.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+
+          <a class="card" href="estados-agua.html">
+            <span class="art" aria-hidden="false">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Hielo, líquido y vapor: la red hexagonal ordenada, las moléculas desordenadas y las moléculas separadas">
+                <g fill="none" stroke="#4dabf7" stroke-width="1.1" opacity=".55">
+                  <path d="M40 62 l14 -8 l14 8 v16 l-14 8 l-14 -8 z"/>
+                  <path d="M68 54 l14 -8 l14 8 v16 l-14 8 l-14 -8 z"/>
+                  <path d="M40 94 l14 -8 l14 8 v16 l-14 8 l-14 -8 z"/>
+                  <path d="M68 86 l14 -8 l14 8 v16 l-14 8 l-14 -8 z"/>
+                </g>
+                <g fill="#4dabf7">
+                  <circle cx="54" cy="70" r="3"/><circle cx="82" cy="62" r="3"/><circle cx="54" cy="102" r="3"/><circle cx="82" cy="94" r="3"/>
+                  <circle cx="102" cy="150" r="3.4" opacity=".85"/><circle cx="122" cy="128" r="3.4" opacity=".85"/><circle cx="138" cy="160" r="3.4" opacity=".85"/><circle cx="156" cy="136" r="3.4" opacity=".85"/><circle cx="120" cy="170" r="3.4" opacity=".85"/><circle cx="150" cy="112" r="3.4" opacity=".85"/>
+                  <circle cx="222" cy="62" r="3.2" opacity=".8"/><circle cx="272" cy="80" r="3.2" opacity=".8"/><circle cx="240" cy="126" r="3.2" opacity=".8"/><circle cx="286" cy="150" r="3.2" opacity=".8"/><circle cx="210" cy="176" r="3.2" opacity=".8"/><circle cx="266" cy="40" r="3.2" opacity=".8"/>
+                </g>
+                <g fill="none" stroke="#30363d" stroke-width="1" stroke-dasharray="3 3">
+                  <line x1="102" y1="150" x2="122" y2="128"/><line x1="122" y1="128" x2="156" y2="136"/><line x1="150" y1="112" x2="138" y2="160"/>
+                  <line x1="222" y1="62" x2="272" y2="80"/><line x1="240" y1="126" x2="286" y2="150"/><line x1="266" y1="40" x2="240" y2="126"/>
+                </g>
+                <g font-family="ui-monospace,Menlo,monospace" font-size="11" text-anchor="middle">
+                  <text x="70" y="132" fill="#69db7c">hielo</text>
+                  <text x="130" y="192" fill="#4dabf7">líquido</text>
+                  <text x="250" y="192" fill="#ffd43b">vapor</text>
+                </g>
+              </svg>
+              <span class="hint">La red del hielo deja huecos</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Química · estados</span>
+              <h3>Estados del agua</h3>
+              <p>Sólido, líquido y gas en movimiento: la red hexagonal del hielo, los puentes de hidrógeno y el <b>porqué de que el hielo flote</b>.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ACTO 6 -->
+      <div class="act">
+        <div class="act-rail">
+          <p class="act-num">Acto 6</p>
+          <p class="act-title">Y más allá de Schrödinger</p>
+          <p class="act-sub">La ecuación de Dirac añadió el espín y la antimateria. Los modelos del átomo no han dejado de sustituirse unos a otros.</p>
+        </div>
+        <div class="cards">
+          <a class="card" href="dirac.html">
+            <span class="art">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Espacio de configuración de dos fermiones: dos manchas simétricas y la diagonal x1 igual a x2 vacía">
+                <defs>
+                  <radialGradient id="dgBlob">
+                    <stop offset="0%" stop-color="#ffd43b" stop-opacity=".95"/>
+                    <stop offset="42%" stop-color="#4dabf7" stop-opacity=".45"/>
+                    <stop offset="100%" stop-color="#0d1117" stop-opacity="0"/>
+                  </radialGradient>
+                </defs>
+                <rect x="76" y="34" width="134" height="134" rx="3" fill="#0a1522" stroke="#30363d"/>
+                <circle cx="108" cy="66" r="35" fill="url(#dgBlob)"/>
+                <circle cx="178" cy="136" r="35" fill="url(#dgBlob)"/>
+                <line x1="78" y1="166" x2="208" y2="36" stroke="#8b949e" stroke-width="1" stroke-dasharray="4 3"/>
+                <path d="M76 30 q16 -12 32 0 t32 0 t32 0 t38 0" fill="none" stroke="#4dabf7" stroke-width="1.4" opacity=".9"/>
+                <g font-family="ui-monospace,Menlo,monospace" font-size="10.5" fill="#9aa4b0">
+                  <text x="58" y="44">x₂</text>
+                  <text x="143" y="192" text-anchor="middle">x₁</text>
+                  <text x="218" y="34" fill="#4dabf7" font-size="10">ρ₁(x₁)</text>
+                </g>
+              </svg>
+              <span class="hint">La diagonal x₁ = x₂ queda vacía</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Historia · Dirac · 2 partículas</span>
+              <h3>De Thomson a Dirac</h3>
+              <p>La línea del tiempo de los modelos del átomo —qué explicaba cada uno y en qué fallaba— y un simulador de <b>dos partículas de Dirac</b>: exclusión de Pauli, positronio y barrera de Klein.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+            <span class="hit"></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LA CIENCIA ============ -->
+  <section class="band" id="ciencia">
+    <div class="band-head">
+      <h2>Es bonito, pero sobre todo es correcto</h2>
+      <p>Todo lo que ves aquí sale de ecuaciones o de datos medidos, no de dibujos decorativos. Y eso se puede comprobar: el proyecto se autocomprueba cada vez que cambia.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>660</b><span>líneas de emisión reales del NIST para los siete gases nobles, con su longitud de onda e intensidad medidas.</span></div>
+      <div class="stat"><b>0,2 %</b><span>es el margen que se exige a cada una de esas líneas: si alguna se desvía más, la comprobación falla.</span></div>
+      <div class="stat"><b>126</b><span>comprobaciones automáticas de la física en cada cambio, desde la forma del orbital hasta los MeV del Sol.</span></div>
+      <div class="stat"><b>0</b><span>librerías externas. Es HTML, CSS y JavaScript propios: se abre sin conexión, incluso desde un pendrive.</span></div>
+    </div>
+
+    <div class="truth">
+      <h3>Y aquí es donde te digo lo que no es</h3>
+      <ul>
+        <li>Los elementos pesados llevan una <b>corrección relativista aproximada</b>: el modelo sirve para ver la tendencia, no para medir.</li>
+        <li>La <b>velocidad de fusión</b> del Sol se calcula de forma cualitativa: enseña por qué el Sol dura, no cuántos fotones salen por segundo.</li>
+        <li>La geometría del agua se muestra con el modelo de repulsión de pares (VSEPR), <b>no resolviendo la ecuación de Schrödinger</b> de la molécula.</li>
+        <li>Las cargas efectivas usan las <b>reglas de Slater</b>, una aproximación de 1930 que funciona sorprendentemente bien pero sigue siendo una aproximación.</li>
+      </ul>
+      <p class="small">Saber dónde falla un modelo es parte del modelo. Los tests y sus errores medidos están en el repositorio.</p>
+    </div>
+  </section>
+
+  <!-- ============ RUTAS ============ -->
+  <section class="band" id="rutas">
+    <div class="band-head">
+      <h2>Tres caminos, según el tiempo que tengas</h2>
+      <p>No hace falta entender las matemáticas para entender lo que se ve. Cada vista se puede tocar sin saber nada de física; el porqué está explicado dentro, en castellano.</p>
+    </div>
+    <div class="routes">
+      <div class="route">
+        <p class="rt">Ruta rápida · 5 min</p>
+        <h3>Quiero ver algo que impresione</h3>
+        <p>Empieza por lo más grande y sigue el rastro del Sol.</p>
+        <ol>
+          <li><a href="orbitales.html">Nubes y orbitales</a></li>
+          <li><a href="fusion.html">Fusión nuclear</a></li>
+          <li><a href="estrella.html">Vida estelar</a></li>
+        </ol>
+        <p class="go"><a href="estrella.html">Empezar por la estrella →</a></p>
+      </div>
+      <div class="route">
+        <p class="rt">Ruta curiosa · 15 min</p>
+        <h3>¿Por qué las cosas son de un color?</h3>
+        <p>Llena un átomo, míralo brillar y compara con una lámpara de verdad.</p>
+        <ol>
+          <li><a href="llenado.html">Llenado electrónico</a></li>
+          <li><a href="espectro.html">Espectro de emisión</a></li>
+          <li><a href="superposicion.html">Superposición temporal</a></li>
+        </ol>
+        <p class="go"><a href="espectro.html">Ir al espectro →</a></p>
+      </div>
+      <div class="route">
+        <p class="rt">Ruta completa</p>
+        <h3>De un electrón a la química de la vida</h3>
+        <p>Los seis actos en orden, que es el orden real de las escalas.</p>
+        <ol>
+          <li><a href="llenado.html">Dentro del átomo</a></li>
+          <li><a href="espectro.html">La luz que emite</a></li>
+          <li><a href="fusion.html">El corazón del Sol</a></li>
+          <li><a href="estrella.html">La vida de una estrella</a></li>
+          <li><a href="quimica.html">Y de ahí, la química</a></li>
+          <li><a href="dirac.html">Y más allá de Schrödinger</a></li>
+        </ol>
+        <p class="go"><a href="llenado.html">Empezar por el principio →</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <p>© 2026 Ángel Luis Robles Fernández · licencia MIT</p>
+    <p>Hecho con HTML, CSS y JavaScript puro, sin ninguna librería externa.</p>
+    <nav aria-label="Enlaces del pie">
+      <a href="https://github.com/alrobles/atomic-simulation" target="_blank" rel="noopener">Código en GitHub</a>
+      <a href="llenado.html">Empezar</a>
+    </nav>
   </div>
-  <div class="ctrl">
-    <button id="bPrev">−1 e⁻</button>
-    <button id="bNext">+1 e⁻</button>
-    <button id="bNoble">⏭ siguiente gas noble</button>
-    <button id="bPlay">▶ animar</button>
-    <input type="range" id="slider" min="0" max="118" value="1">
-  </div>
+</footer>
 
-  <div id="table"></div>
-
-  <div id="seq"></div>
-
-  <div class="exp">
-    <p><b>1. Cada tipo de orbital tiene su número de "cajitas":</b> s = 1, p = 3, d = 5, f = 7 (siempre impares: 1, 3, 5, 7). En cada cajita caben <b>2 electrones</b> (↑↓), así que los cupos son s = 2, p = 6, d = 10, f = 14.</p>
-    <p><b>2. Se llenan en un orden fijo, de menor a mayor energía.</b> Los orbitales que se alejan más del núcleo (con <i>n</i> grande) o que tienen formas más complicadas (con <i>l</i> grande) cuestan más energía. Por eso el 4s se llena <i>antes</i> que el 3d, y el 6s antes que el 4f. La regla es: menor <i>n + l</i> va primero.</p>
-    <p><b>3. Después de cada p viene un salto grande de energía.</b> El siguiente electrón tiene que irse a una capa nueva, más lejana. Por eso un átomo con su último p lleno es muy estable y "no quiere" ganar ni perder electrones: es un <b>gas noble</b>.</p>
-    <p><b>4. El patrón:</b> cada fila suma 2, 8, 8, 18, 18, 32, 32, que es 2×1, 2×4, 2×4, 2×9, 2×9, 2×16, 2×16. Son 2 por un cuadrado perfecto, y casi todos aparecen dos veces.</p>
-    <p style="color:#8b949e;font-size:12px">Notas: la izquierda muestra orbitales del hidrógeno (forma exacta). En "átomo completo" la escala radial está comprimida para que se vean todas las capas. Algunos elementos reales (Cr, Cu, La…) rompen ligeramente el orden de llenado; aquí se usa el orden ideal.</p>
-  </div>
-</div>
-
+<script src="js/physics.js"></script>
+<script src="js/specdata.js"></script>
 <script>
-// ---------- Datos ----------
-const SYM="H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og".split(" ");
-const NOBLE={2:"Helio",10:"Neón",18:"Argón",36:"Kriptón",54:"Xenón",86:"Radón",118:"Oganesón"};
-const NOBLE_Z=[2,10,18,36,54,86,118];
-const PERIODS=[["1s"],["2s","2p"],["3s","3p"],["4s","3d","4p"],["5s","4d","5p"],["6s","4f","5d","6p"],["7s","5f","6d","7p"]];
-const LL={s:0,p:1,d:2,f:3}, LCH="spdf";
-const LCOL=["#ff6b6b","#ffd43b","#4dabf7","#69db7c"];
-const SUBS=[]; {let c=0; PERIODS.forEach((row,pi)=>row.forEach(lab=>{const n=+lab[0],l=LL[lab[1]],cap=2*(2*l+1);SUBS.push({lab,n,l,cap,start:c,period:pi});c+=cap;}));}
-const sup=s=>String(s).split("").map(c=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("");
-const eIn=(s,Z)=>Math.max(0,Math.min(s.cap,Z-s.start));
-function boxOcc(s,Z,i){const e=eIn(s,Z),nb=2*s.l+1;return (e>i?1:0)+(e>nb+i?1:0);}
-function lastOrb(Z){if(Z<1)return null;for(const s of SUBS)if(Z<=s.start+s.cap){const j=Z-s.start-1;return{n:s.n,l:s.l,i:j%(2*s.l+1)};}}
+(function () {
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ---------- Armónicos esféricos reales (forma cartesiana) ----------
-const ANG=[
- [()=>1],
- [(x,y,z)=>x,(x,y,z)=>y,(x,y,z)=>z],
- [(x,y,z)=>x*y,(x,y,z)=>y*z,(x,y,z)=>3*z*z-1,(x,y,z)=>x*z,(x,y,z)=>x*x-y*y],
- [(x,y,z)=>y*(3*x*x-y*y),(x,y,z)=>x*y*z,(x,y,z)=>y*(5*z*z-1),(x,y,z)=>z*(5*z*z-3),(x,y,z)=>x*(5*z*z-1),(x,y,z)=>z*(x*x-y*y),(x,y,z)=>x*(x*x-3*y*y)]
-];
-const ANGNAME=[["s"],["pₓ","p_y","p_z"],["d_xy","d_yz","d_z²","d_xz","d_x²−y²"],["f_y(3x²−y²)","f_xyz","f_yz²","f_z³","f_xz²","f_z(x²−y²)","f_x(x²−3y²)"]];
-function randDir(){const z=2*Math.random()-1,p=2*Math.PI*Math.random(),s=Math.sqrt(1-z*z);return[s*Math.cos(p),s*Math.sin(p),z];}
-const ANGMAX=ANG.map(L=>L.map(f=>{let m=0;for(let k=0;k<20000;k++){const d=randDir();m=Math.max(m,Math.abs(f(...d)));}return m*1.02;}));
-function sampleDir(l,i){const f=ANG[l][i],M=ANGMAX[l][i];for(;;){const d=randDir(),v=f(...d);if(Math.random()*M*M<v*v)return[d,v>=0?1:-1];}}
+  /* ============ 1. Nubes reales (physics.js) ============ */
+  var A = window.Atom;
+  // specdata.js declara "const SPEC": una const de nivel superior NO es window.SPEC.
+  // Hay que resolver el identificador desnudo desde el ámbito global del script.
+  var SD = (function () { try { return typeof SPEC !== "undefined" ? SPEC : null; } catch (e) { return null; } })();
 
-// ---------- Parte radial del hidrógeno ----------
-function lag(k,a,x){if(k===0)return 1;let L0=1,L1=1+a-x;for(let i=1;i<k;i++){const L2=((2*i+1+a-x)*L1-(i+a)*L0)/(i+1);L0=L1;L1=L2;}return L1;}
-function Rnl(n,l,r){const rho=2*r/n;return Math.pow(rho,l)*Math.exp(-rho/2)*lag(n-l-1,2*l+1,rho);}
-const radCache={};
-function radial(n,l){const key=n+","+l;if(radCache[key])return radCache[key];
-  const G=4000,rmax=3*n*n+12,dr=rmax/G,rs=new Float64Array(G),cdf=new Float64Array(G),sg=new Int8Array(G);let acc=0;
-  for(let k=0;k<G;k++){const r=(k+.5)*dr,R=Rnl(n,l,r);rs[k]=r;sg[k]=R>=0?1:-1;acc+=r*r*R*R;cdf[k]=acc;}
-  let r99=rmax;for(let k=0;k<G;k++){cdf[k]/=acc;if(cdf[k]>0.99&&r99===rmax)r99=rs[k];}
-  return radCache[key]={rs,cdf,sg,dr,r99};}
-function sampleR(rad){const u=Math.random();let lo=0,hi=rad.cdf.length-1;while(lo<hi){const m=(lo+hi)>>1;if(rad.cdf[m]<u)lo=m+1;else hi=m;}
-  return[rad.rs[lo]+(Math.random()-.5)*rad.dr,rad.sg[lo]];}
+  /* Cada ilustración se envuelve en .fig para dejar libre la franja del pie de figura.
+     Una sola regla para las diez tarjetas, en vez de repetir un contenedor en el HTML. */
+  Array.prototype.forEach.call(document.querySelectorAll(".art"), function (art) {
+    var fig = null;
+    for (var i = 0; i < art.children.length; i++) {
+      if (art.children[i].className !== "hint") { fig = art.children[i]; break; }
+    }
+    if (!fig) return;
+    var w = document.createElement("span");
+    w.className = "fig";
+    art.insertBefore(w, fig);
+    w.appendChild(fig);
+  });
 
-// ---------- Generación de nubes de puntos ----------
-function makeGroup(color,alpha,N){return{color,alpha,x:new Float32Array(N),y:new Float32Array(N),z:new Float32Array(N),c:0};}
-function push(g,x,y,z){g.x[g.c]=x;g.y[g.c]=y;g.z[g.c]=z;g.c++;}
-function genOrbital(n,l,i){
-  const N=26000,rad=radial(n,l),pos=makeGroup("#4dabf7",.45,N),neg=makeGroup("#ff922b",.45,N),S=1/rad.r99;
-  for(let k=0;k<N;k++){const[r,sr]=sampleR(rad),[d,sa]=sampleDir(l,i);push(sr*sa>0?pos:neg,d[0]*r*S,d[1]*r*S,d[2]*r*S);}
-  return[pos,neg];}
-function genAtom(Z){
-  if(Z<1)return[];
-  const per=Math.max(160,Math.floor(36000/Z)),groups=LCOL.map(c=>makeGroup(c,.4,40000+per*4));
-  let maxR=0;SUBS.forEach(s=>{if(eIn(s,Z)>0)maxR=Math.max(maxR,radial(s.n,s.l).r99/s.n);});
-  SUBS.forEach(s=>{if(eIn(s,Z)===0)return;const rad=radial(s.n,s.l);
-    for(let i=0;i<2*s.l+1;i++){const occ=boxOcc(s,Z,i);for(let k=0;k<occ*per;k++){const[r]=sampleR(rad),[d]=sampleDir(s.l,i),rr=r/s.n/maxR;push(groups[s.l],d[0]*rr,d[1]*rr,d[2]*rr);}}});
-  return groups;}
+  function mountCloud(canvas, opts) {
+    if (!A || !A.genOrbital) return null;
+    opts = opts || {};
+    var ctx = canvas.getContext("2d");
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var orbs = opts.orbs, pts = opts.points || 6000;
+    // color de fase: el mismo azul/naranja que usan orbitales.html y las demás vistas
+    function mk(o) { return { n: o[0], l: o[1], i: o[2], cloud: A.genOrbital(o[0], o[1], o[2], pts), a: 1 }; }
+    var st = {
+      az: 0.55, el: 0.34, idx: 0, visible: true, raf: 0, zoom: 1,
+      cur: mk(orbs[0]), nxt: null
+    };
+    st.next = function () {
+      st.idx = (st.idx + 1) % orbs.length;
+      st.nxt = mk(orbs[st.idx]); st.nxt.a = 0;
+      if (opts.onChange) opts.onChange(st.idx);
+    };
 
-// ---------- Estado ----------
-let Z=1,mode="orbital",sel=null,cloud=[],cloudKey="",playing=false;
-const $=id=>document.getElementById(id);
+    function project(W, H, zoom) {
+      var ca = Math.cos(st.az), sa = Math.sin(st.az), ce = Math.cos(st.el), se = Math.sin(st.el);
+      var cx = W / 2, cy = H / 2, S = Math.min(W, H) * 0.42 * zoom;
+      return function (x, y, z) {
+        var vx = x * ca - y * sa, d0 = x * sa + y * ca;
+        var up = z * ce - d0 * se, dep = z * se + d0 * ce, p = 1 / (1 + dep * 0.28);
+        return [cx + vx * S * p, cy - up * S * p];
+      };
+    }
+    function drawCloud(c, alpha, pr, sz) {
+      for (var g = 0; g < c.length; g++) {
+        var grp = c[g];
+        ctx.globalAlpha = grp.alpha * alpha;
+        ctx.fillStyle = grp.color;
+        var X = grp.x, Y = grp.y, Zz = grp.z, n = grp.c;
+        for (var k = 0; k < n; k++) {
+          var p = pr(X[k], Y[k], Zz[k]);
+          ctx.fillRect(p[0], p[1], sz, sz);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+    function frame(ts) {
+      var dt = st.last ? Math.min(64, ts - st.last) : 16; st.last = ts;
+      var W = canvas.clientWidth, H = canvas.clientHeight;
+      if (!W || !H) { st.raf = 0; return; }
+      if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+        canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      if (!reduce && !st.drag) st.az += 0.00035 * dt;
+      // fundido entre orbitales
+      if (st.nxt) {
+        st.nxt.a += dt / 900;
+        st.cur.a = Math.max(0, 1 - st.nxt.a);
+        if (st.nxt.a >= 1) { st.cur = st.nxt; st.nxt = null; st.cur.a = 1; }
+      }
+      var pr = project(W, H, st.zoom || 1), sz = Math.max(1, 1.5 * Math.sqrt(st.zoom || 1));
+      drawCloud(st.cur.cloud, st.cur.a, pr, sz);
+      if (st.nxt) drawCloud(st.nxt.cloud, st.nxt.a, pr, sz);
+      st.raf = requestAnimationFrame(frame);
+    }
+    // girar con el ratón (solo el héroe; la tarjeta es decorativa)
+    if (opts.drag) {
+      canvas.style.pointerEvents = "auto";
+      canvas.style.cursor = "grab";
+      var drag = null;
+      canvas.addEventListener("pointerdown", function (e) { drag = [e.clientX, e.clientY]; st.drag = 1; canvas.setPointerCapture(e.pointerId); });
+      canvas.addEventListener("pointerup", function () { drag = null; st.drag = 0; });
+      canvas.addEventListener("pointermove", function (e) {
+        if (!drag) return;
+        st.az += (e.clientX - drag[0]) * 0.01;
+        st.el = Math.max(-1.4, Math.min(1.4, st.el + (e.clientY - drag[1]) * 0.01));
+        drag = [e.clientX, e.clientY];
+      });
+    }
+    // solo anima si se ve
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) {
+        st.visible = es[0].isIntersecting;
+        if (st.visible && !st.raf) { st.last = 0; st.raf = requestAnimationFrame(frame); }
+        else if (!st.visible && st.raf) { cancelAnimationFrame(st.raf); st.raf = 0; }
+      }, { rootMargin: "120px" }).observe(canvas);
+    }
+    st.start = function () { if (!st.raf) { st.last = 0; st.raf = requestAnimationFrame(frame); } };
+    st.start();
+    return st;
+  }
 
-function currentOrb(){return sel||lastOrb(Z)||{n:1,l:0,i:0};}
-function update(){
-  $("slider").value=Z;
-  // elemento
-  const symEl=$("sym");symEl.innerHTML=(Z?SYM[Z-1]:"—")+`<small>Z=${Z}</small>`;symEl.classList.toggle("noble",!!NOBLE[Z]);
-  let core=0;for(const nz of NOBLE_Z)if(nz<Z)core=nz;
-  const full=SUBS.filter(s=>eIn(s,Z)>0).map(s=>s.lab+sup(eIn(s,Z))).join(" ");
-  const short=core?`[${SYM[core-1]}] `+SUBS.filter(s=>s.start>=core&&eIn(s,Z)>0).map(s=>s.lab+sup(eIn(s,Z))).join(" "):full;
-  $("conf").innerHTML=Z?`${short}<div class="core">${core?full:"&nbsp;"}</div>`:"(sin electrones)";
-  $("badgeBox").innerHTML=NOBLE[Z]?`<span id="badge">¡${NOBLE[Z]}! Gas noble: fila completa</span>`:"";
-  // tabla
-  const lo=lastOrb(Z),co=currentOrb();let h="";
-  PERIODS.forEach((row,pi)=>{
-    const subs=SUBS.filter(s=>s.period===pi),last=subs[subs.length-1],end=last.start+last.cap,tot=end-subs[0].start;
-    const isFull=Z>=end,act=Z>subs[0].start&&Z<end;
-    h+=`<div class="row ${isFull?"full":""} ${act?"active":""}"><div class="plabel">Periodo ${pi+1}</div><div class="subs">`;
-    subs.forEach(s=>{h+=`<div class="sub l${s.l}"><div class="slab">${s.lab}<span>${eIn(s,Z)}/${s.cap}</span></div><div class="boxes">`;
-      for(let i=0;i<2*s.l+1;i++){const o=boxOcc(s,Z,i),isSel=mode==="orbital"&&co.n===s.n&&co.l===s.l&&co.i===i,isLast=lo&&lo.n===s.n&&lo.l===s.l&&lo.i===i;
-        h+=`<div class="box ${isSel?"sel":""} ${isLast?"last":""}" data-n="${s.n}" data-l="${s.l}" data-i="${i}" title="${s.n}${ANGNAME[s.l][i]}">${o>0?"↑":""}${o>1?"↓":""}</div>`;}
-      h+=`</div></div>`;});
-    h+=`</div><div class="psum">${subs.map(s=>s.cap).join("+")} = <b>${tot}</b><div class="ng ${isFull?"on":""}">${NOBLE[end]} · ${end}</div></div></div>`;});
-  $("table").innerHTML=h;
-  // secuencia
-  let q="";NOBLE_Z.forEach((nz,k)=>{if(k)q+=`<span class="d">+${nz-NOBLE_Z[k-1]}→</span>`;q+=`<span class="n ${Z>=nz?"on":""}">${nz}</span>`;});
-  $("seq").innerHTML=q;
-  // nube
-  const key=mode==="orbital"?`o${co.n}${co.l}${co.i}`:`a${Z}`;
-  if(key!==cloudKey){cloudKey=key;cloud=mode==="orbital"?genOrbital(co.n,co.l,co.i):genAtom(Z);}
-  if(mode==="orbital"){const nr=co.n-co.l-1;
-    $("info").innerHTML=`<div class="big">${co.n}${ANGNAME[co.l][co.i]}</div>n = ${co.n} (capa) · l = ${co.l} (tipo ${LCH[co.l]}) · ${2*co.l+1} orientaciones posibles<br>
-      Nodos radiales (cáscaras vacías): <b>${nr}</b> · Superficies nodales angulares: <b>${co.l}</b><br>
-      <span class="legend"><span style="background:#4dabf7;margin-left:0"></span>fase + <span style="background:#ff922b"></span>fase −</span>
-      <span style="color:#8b949e"> · ${sel?"(seleccionado, haz clic en +1 para seguir)":"(orbital donde entró el último electrón)"}</span>`;}
-  else $("info").innerHTML=`<div class="big">${Z?SYM[Z-1]:"—"}: todas las capas ocupadas</div>
-      <span class="legend"><span style="background:${LCOL[0]};margin-left:0"></span>s <span style="background:${LCOL[1]}"></span>p <span style="background:${LCOL[2]}"></span>d <span style="background:${LCOL[3]}"></span>f</span>
-      <span style="color:#8b949e"> · escala radial comprimida (capa n a radio ∝ n)</span>`;
-}
-function setZ(z){Z=Math.max(0,Math.min(118,z));sel=null;update();}
+  /* ---- héroe: cicla 1s → 2p → 3d → 4f y lo nombra ---- */
+  var ORBS = [[1, 0, 0], [2, 1, 2], [3, 2, 2], [4, 3, 3]];
+  var ORBNAME = ["1s", "2p<sub>z</sub>", "3d<sub>z²</sub>", "4f<sub>z³</sub>"];
+  var ORBDESC = [
+    "una nube esférica: no hay órbitas, hay probabilidad",
+    "dos lóbulos opuestos, uno por cada fase",
+    "cuatro lóbulos y un anillo alrededor",
+    "ocho lóbulos: el orbital más enrevesado del átomo"
+  ];
+  var label = document.getElementById("orbLabel");
+  function showOrb(i) {
+    if (label) label.innerHTML = "<b>" + ORBNAME[i] + "</b> — " + ORBDESC[i];
+  }
+  var heroEl = document.getElementById("heroCloud");
+  var hero = heroEl ? mountCloud(heroEl, { orbs: ORBS, points: 13000, drag: true, onChange: showOrb }) : null;
+  if (hero) {
+    showOrb(0);
+    if (!reduce && ORBS.length > 1) setInterval(hero.next, 7000);
+  } else if (label) {
+    label.parentNode.removeChild(label);
+  }
 
-// ---------- Controles ----------
-$("bPrev").onclick=()=>setZ(Z-1);
-$("bNext").onclick=()=>setZ(Z+1);
-$("bNoble").onclick=()=>{const nz=NOBLE_Z.find(v=>v>Z);if(nz)setZ(nz);};
-$("slider").oninput=e=>setZ(+e.target.value);
-$("mOrb").onclick=()=>{mode="orbital";$("mOrb").classList.add("on");$("mAtom").classList.remove("on");update();};
-$("mAtom").onclick=()=>{mode="atom";sel=null;$("mAtom").classList.add("on");$("mOrb").classList.remove("on");update();};
-$("table").onclick=e=>{const b=e.target.closest(".box");if(!b)return;sel={n:+b.dataset.n,l:+b.dataset.l,i:+b.dataset.i};mode="orbital";$("mOrb").classList.add("on");$("mAtom").classList.remove("on");update();};
-$("bPlay").onclick=()=>{playing=!playing;$("bPlay").textContent=playing?"⏸ pausa":"▶ animar";if(playing){if(Z>=118)setZ(0);step();}};
-function step(){if(!playing)return;if(Z>=118){playing=false;$("bPlay").textContent="▶ animar";return;}setZ(Z+1);setTimeout(step,NOBLE[Z]?1600:mode==="atom"?260:420);}
-document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")setZ(Z+1);if(e.key==="ArrowLeft")setZ(Z-1);});
+  /* ---- tarjetas con nube ---- */
+  Array.prototype.forEach.call(document.querySelectorAll("canvas[data-cloud]"), function (cv) {
+    var p = cv.getAttribute("data-cloud").split(",").map(Number);
+    mountCloud(cv, { orbs: [[p[0], p[1], p[2]]], points: +cv.getAttribute("data-points") || 4000 });
+  });
 
-// ---------- Render 3D (canvas 2D, sin librerías) ----------
-const cv=$("cv"),ctx=cv.getContext("2d");
-let az=0.6,el=0.35,zoom=1,drag=null;
-// pointer events: funciona con ratón, dedo y lápiz (touch-action:none evita el scroll)
-cv.addEventListener("pointerdown",e=>{drag=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId);cv.style.cursor="grabbing";});
-cv.addEventListener("pointerup",e=>{drag=null;cv.style.cursor="grab";});
-cv.addEventListener("pointercancel",()=>{drag=null;cv.style.cursor="grab";});
-cv.addEventListener("pointermove",e=>{if(!drag)return;az+=(e.clientX-drag[0])*0.01;el=Math.max(-1.5,Math.min(1.5,el+(e.clientY-drag[1])*0.01));drag=[e.clientX,e.clientY];});
-cv.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.3,Math.min(5,zoom*(e.deltaY<0?1.1:0.9)));},{passive:false});
-function draw(){
-  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
-  if(cv.width!==W*dpr||cv.height!==H*dpr){cv.width=W*dpr;cv.height=H*dpr;}
-  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.fillStyle="#0d1117";ctx.fillRect(0,0,W,H);
-  if(!drag)az+=0.003;
-  const ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el),cx=W/2,cy=H/2+20,S=Math.min(W,H)*0.40*zoom;
-  const proj=(x,y,z)=>{const vx=x*ca-y*sa,d0=x*sa+y*ca,up=z*ce-d0*se,dep=z*se+d0*ce,p=1/(1+dep*0.25);return[cx+vx*S*p,cy-up*S*p];};
-  // ejes
-  ctx.strokeStyle="#30363d";ctx.fillStyle="#6e7681";ctx.font="13px sans-serif";ctx.lineWidth=1;
-  [[1,0,0,"x"],[0,1,0,"y"],[0,0,1,"z"]].forEach(([a,b,c,t])=>{const p1=proj(-a*1.1,-b*1.1,-c*1.1),p2=proj(a*1.1,b*1.1,c*1.1);ctx.beginPath();ctx.moveTo(...p1);ctx.lineTo(...p2);ctx.stroke();ctx.fillText(t,p2[0]+4,p2[1]);});
-  // núcleo
-  const n0=proj(0,0,0);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(n0[0],n0[1],2.5,0,7);ctx.fill();
-  // puntos
-  const sz=Math.max(1.2,1.6*Math.sqrt(zoom));
-  for(const g of cloud){ctx.fillStyle=g.color;ctx.globalAlpha=g.alpha;const X=g.x,Y=g.y,Zs=g.z;
-    for(let k=0;k<g.c;k++){const x=X[k],y=Y[k],z=Zs[k],vx=x*ca-y*sa,d0=x*sa+y*ca,up=z*ce-d0*se,dep=z*se+d0*ce,p=1/(1+dep*0.25);
-      ctx.fillRect(cx+vx*S*p,cy-up*S*p,sz,sz);}}
-  requestAnimationFrame(draw);
-}
-update();draw();
+  /* ============ 2. Espectro real (specdata.js) ============ */
+  var GASES = ["He", "Ne", "Ar", "Kr", "Xe"];
+  var linesEl = document.getElementById("specLines"), gasesEl = document.getElementById("specGases"), hintEl = document.getElementById("specHint");
+  var VIS0 = 380, VIS1 = 780, W0 = 250, W1 = 1050;
+  var OUT_GREY = 0.62; // misma convención que js/espectro.js: fuera del visible, gris
+  function wave2rgb(w) {
+    if (w < VIS0 || w > VIS1) return [OUT_GREY, OUT_GREY, OUT_GREY];
+    var r = 0, g = 0, b = 0;
+    if (w < 440) { r = -(w - 440) / 60; b = 1; }
+    else if (w < 490) { g = (w - 440) / 50; b = 1; }
+    else if (w < 510) { g = 1; b = -(w - 510) / 20; }
+    else if (w < 580) { r = (w - 510) / 70; g = 1; }
+    else if (w < 645) { r = 1; g = -(w - 645) / 65; }
+    else { r = 1; }
+    var f = 1;
+    if (w > 700) f = 0.3 + 0.7 * (780 - w) / 80;
+    else if (w < 420) f = 0.3 + 0.7 * (w - 380) / 40;
+    return [Math.min(1, r * f), Math.min(1, g * f), Math.min(1, b * f)];
+  }
+  function drawSpec(gas) {
+    if (!linesEl || !SD || !SD[gas]) return;
+    var raw = SD[gas].lines;
+    // une líneas repetidas (el NIST lista cada componente del multiplete por separado)
+    var byLam = {}, order = [];
+    for (var k = 0; k < raw.length; k++) {
+      var lam = Math.round(raw[k][0] * 50) / 50;
+      if (lam < W0 || lam > W1) continue;
+      if (byLam[lam] === undefined) { byLam[lam] = 0; order.push(lam); }
+      if (raw[k][1] > byLam[lam]) byLam[lam] = raw[k][1];
+    }
+    var maxI = 1;
+    for (var j = 0; j < order.length; j++) maxI = Math.max(maxI, byLam[order[j]]);
+    var html = "";
+    for (var m = 0; m < order.length; m++) {
+      var L = order[m], c = wave2rgb(L), rel = byLam[L] / maxI;
+      var h = 12 + 78 * Math.sqrt(rel);           // altura ∝ √intensidad
+      var x = (L - W0) / (W1 - W0) * 100;
+      var col = "rgb(" + Math.round(c[0] * 255) + "," + Math.round(c[1] * 255) + "," + Math.round(c[2] * 255) + ")";
+      var vis = L >= VIS0 && L <= VIS1;
+      html += '<i style="left:' + x.toFixed(2) + '%;height:' + h.toFixed(1) + '%;background:' + col +
+        ';opacity:' + (vis ? (0.55 + 0.45 * rel).toFixed(2) : "0.42") +
+        ';box-shadow:0 0 ' + (6 * rel + 2).toFixed(0) + 'px ' + col + (vis ? "" : "55") + '"></i>';
+    }
+    linesEl.innerHTML = html;
+    if (hintEl) hintEl.textContent = SD[gas].name + " · " + order.length + " líneas NIST";
+    Array.prototype.forEach.call(gasesEl.children, function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.gas === gas));
+    });
+  }
+  if (gasesEl && SD) {
+    GASES.forEach(function (g, i) {
+      var b = document.createElement("button");
+      var info = SD[g];
+      b.type = "button"; b.dataset.gas = g;
+      b.textContent = g;
+      b.title = info ? info.name + " · Z = " + info.z + " · " + info.conf : g;
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { userPicked = true; drawSpec(g); });
+      gasesEl.appendChild(b);
+      if (i === 1) drawSpec(g);   // arranca en el neón
+    });
+    var userPicked = false, gi = 1;
+    if (!reduce) setInterval(function () {
+      if (userPicked) return;
+      gi = (gi + 1) % GASES.length; drawSpec(GASES[gi]);
+    }, 4800);
+  }
+
+  /* ============ 3. Mini mapa de la tabla (color del último subnivel) ============ */
+  (function () {
+    var box = document.getElementById("ptMini");
+    if (!box || !A || !A.ELEMENTS) return;
+    var LASTCOL = ["#ff6b6b", "#ffd43b", "#4dabf7", "#69db7c"]; // s p d f, los mismos de todo el sitio
+    var START = [0, 0, 0, 0, 0, 2, 2];   // hueco del bloque f en los periodos 6 y 7
+    var COUNT = [2, 8, 8, 18, 18, 32, 32];
+    var cell = 6.8, step = 8.8, x0 = 10, y0 = 78;
+    var frag = document.createDocumentFragment(), Z = 0;
+    COUNT.forEach(function (n, p) {
+      for (var k = 0; k < n; k++) {
+        Z++;
+        var cfg = A.elementConfig(Z), last = cfg[cfg.length - 1] || { l: 0 };
+        var r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (x0 + (START[p] + k) * step).toFixed(1));
+        r.setAttribute("y", (y0 + p * step).toFixed(1));
+        r.setAttribute("width", cell); r.setAttribute("height", cell); r.setAttribute("rx", 2.2);
+        r.setAttribute("fill", LASTCOL[last.l] || "#8b949e");
+        r.setAttribute("opacity", A.ELEMENTS[Z - 1].isNoble ? "1" : "0.6");
+        frag.appendChild(r);
+      }
+    });
+    box.appendChild(frag);
+  })();
+
+  /* ============ 4. Nada más: un solo momento de movimiento (el orbital del héroe) ============ */
+})();
 </script>
 </body>
 </html>

@@ -1,12 +1,13 @@
 # Orbitales y gases nobles
 
-Ocho visualizaciones interactivas (HTML + JavaScript, sin dependencias ni build): cuatro sobre la estructura electrónica —**por qué los gases nobles tienen 2, 10, 18, 36, 54, 86 y 118 electrones**, la misma vista abierta a cualquier elemento de la tabla periódica, y **cómo emiten luz**—, dos sobre el destino de la materia, y dos para explorar la molécula de agua y sus fases.
+Once visualizaciones interactivas (HTML + JavaScript, sin dependencias ni build): sobre la estructura electrónica —**por qué los gases nobles tienen 2, 10, 18, 36, 54, 86 y 118 electrones**, la misma vista abierta a cualquier elemento de la tabla periódica, **cómo emiten luz** y por qué un estado puro no irradia—, sobre el enlace y la materia —hibridación, orbitales moleculares, la molécula de agua y sus fases—, sobre el núcleo y las estrellas, y una sobre la historia de los modelos y la ecuación de Dirac.
 
-## Las ocho vistas
+## Las vistas
 
 | Página | Qué muestra |
 |---|---|
-| [`index.html`](index.html) | **Llenado electrónico**: el átomo se llena electrón por electrón (slider 0–118 e⁻, botones −1/+1, "siguiente gas noble", animación). Tabla de periodos con cajitas de orbitales, configuración con carozo [gas noble], y visor 3D del orbital del último electrón o del átomo completo. Archivo único autocontenido. |
+| [`index.html`](index.html) | **Portada**: el proyecto como una cadena de seis actos (átomo → luz → núcleo → estrella → química → más allá). Sobre el título gira una nube real de orbital (cicla 1s → 2p → 3d → 4f, calculada con `js/physics.js`), cada tarjeta enseña una pieza, el espectro de emisión se dibuja al vuelo con las líneas del NIST y hay tres rutas de entrada según el tiempo disponible. Enlaza las once vistas. |
+| [`llenado.html`](llenado.html) | **Llenado electrónico**: el átomo se llena electrón por electrón (slider 0–118 e⁻, botones −1/+1, "siguiente gas noble", animación). Tabla de periodos con cajitas de orbitales, configuración con carozo [gas noble], y visor 3D del orbital del último electrón o del átomo completo. Archivo único autocontenido. |
 | [`orbitales.html`](orbitales.html) | **Gases nobles por pestañas** (He…Og): nube 3D del átomo, **campo de densidad** 2D (mapa de \|ψ\|² con contornos y escala en pm) y **distribución radial** P(r). Escala didáctica (capas en anillos) o real (Slater), control de giro, "pelar la cebolla" por capas y galería de orbitales del periodo. Usa los módulos de `js/`. |
 | [`orbitales_all.html`](orbitales_all.html) | **Cualquier elemento, Z = 1…118**: la misma vista de orbitales con tabla periódica en vez de pestañas fijas — nube 3D, campo de densidad y distribución radial del elemento que elijas, con su configuración electrónica y su Z<sub>ef</sub>. Comparte `css/style.css` con `orbitales.html`. |
 | [`espectro.html`](espectro.html) | **Espectro de emisión**: líneas espectrales reales del átomo neutro (NIST ASD, 250–1050 nm) sobre el arcoíris del visible, diagrama de niveles tipo Grotrian agrupado por tipo de orbital, y **simulación de excitación/emisión**: se excita un electrón externo y se anima la cascada de fotones emitidos (ΔE = hc/λ). Pestañas He…Og; Og no tiene datos (átomo de vida ~1 ms, espectro solo predicho). |
@@ -14,8 +15,11 @@ Ocho visualizaciones interactivas (HTML + JavaScript, sin dependencias ni build)
 | [`estrella.html`](estrella.html) | **Ciclo de vida estelar**: slider de masa inicial (0.5–30 M☉) que determina el destino. La estrella evoluciona por fases (secuencia principal → gigante → quemado de He → destino) dibujando su trayectoria en el **diagrama H–R** en vivo: color y tamaño reales por T y R. Enanas marrones, enanas blancas, estrellas de neutrones y agujeros negros. |
 | [`agua.html`](agua.html) | **Molécula de agua**: modelo 3D interactivo con geometría angular (104.5°), enlaces O–H, cargas parciales, dipolo y control para explorar el ángulo. Vista cualitativa de densidad electrónica (5,300 muestras ilustrativas) y animación de los tres modos normales de vibración. |
 | [`estados-agua.html`](estados-agua.html) | **Agua en varios estados**: dinámica molecular 2D cualitativa de 42 moléculas rígidas con preajustes de sólido, líquido y gas. Interacciones efectivas de corto alcance y puentes de hidrógeno orientacionales; un control de T* permite calentarlas y desordenar la estructura. |
+| [`superposicion.html`](superposicion.html) | **Superposición temporal Ψ(r⃗, t)**: un estado puro es estacionario y no irradia; durante una transición el electrón está en superposición y el término cruzado hace oscilar la nube a la frecuencia de Bohr ω = (E₂−E₁)/ℏ. Corte de la densidad en el plano xz con presets (Lyman α, Balmer, monopolar 1s↔2s), control de mezcla y la flecha del dipolo ⟨z⟩(t). |
+| [`quimica.html`](quimica.html) | **Hibridación y enlace (LCAO-MO)**: esquema interactivo de hibridación sp, sp², sp³, sp³d y sp³d² con sus lóbulos direccionales, y orbitales moleculares σ₁ₛ / σ₁ₛ* de H₂⁺ frente a la distancia internuclear R, con la curva de energía y el mínimo de equilibrio. |
+| [`dirac.html`](dirac.html) | **De Thomson a Dirac y el Modelo Estándar**: línea del tiempo de los modelos del átomo (qué explicaba cada uno y en qué fallaba) y simulador de Dirac de dos partículas en el espacio de configuración (x₁, x₂) — exclusión de Pauli, positronio y barrera de Klein — con integrador split-step FFT de 4 componentes espinoriales que conserva ∫\|Ψ\|² = 1. |
 
-Las visualizaciones atómicas comparten la física de orbitales y la regla de Madelung (*n + l*). `agua.html` amplía el tema a una molécula, con un esquema VSEPR claramente distinguido de un cálculo cuántico molecular; `estados-agua.html` muestra cómo las interacciones efectivas entre muchas moléculas producen comportamientos colectivos. `fusion.html` y `estrella.html` conectan la estructura de la materia con el núcleo y la evolución estelar.
+Las visualizaciones atómicas comparten la física de orbitales y la regla de Madelung (*n + l*). `superposicion.html` explica el mecanismo de la emisión (la nube oscilando entre dos orbitales), `quimica.html` lleva el orbital a la molécula —hibridación y orbitales moleculares— y `dirac.html` cierra el recorrido con la historia de los modelos y la ecuación de Dirac. `agua.html` amplía el tema a una molécula, con un esquema VSEPR claramente distinguido de un cálculo cuántico molecular; `estados-agua.html` muestra cómo las interacciones efectivas entre muchas moléculas producen comportamientos colectivos. `fusion.html` y `estrella.html` conectan la estructura de la materia con el núcleo y la evolución estelar.
 
 ## orbitales.html en detalle
 
@@ -29,7 +33,7 @@ Las visualizaciones atómicas comparten la física de orbitales y la regla de Ma
 | Capas | Activa o desactiva subcapas para "pelar" el átomo |
 | Galería | Todos los orbitales del periodo (s, p, d, f en todas sus orientaciones); clic para verlo en grande con fases y nodos |
 
-## index.html en detalle
+## llenado.html en detalle
 
 | Elemento | Qué muestra |
 |---|---|
@@ -50,15 +54,19 @@ Las visualizaciones atómicas comparten la física de orbitales y la regla de Ma
 ## Estructura
 
 ```
-index.html        llenado electrónico — autocontenido
+index.html        portada — la cadena de vistas y por dónde empezar
+llenado.html      llenado electrónico paso a paso — autocontenido
 orbitales.html    gases nobles — pestañas + 3 vistas
 orbitales_all.html  tabla periódica completa — la misma vista para Z = 1…118
-espectro.html     espectro de emisión + diagrama de niveles + simulación
+espectro.html     espectro de emisión + diagrama de niveles + efecto Zeeman
+superposicion.html  superposición temporal Ψ(r,t) — el dipolo que emite
 fusion.html       cadena pp — plasma, fusiones y balance E=mc²
 estrella.html     ciclo de vida estelar — H–R + destinos por masa
+quimica.html      hibridación (sp…sp³d²) y enlace LCAO-MO
 agua.html         molécula de agua — geometría, densidad cualitativa y vibraciones
 estados-agua.html H₂O en 2D — interacciones, puentes H, estados y temperatura
-css/style.css     estilos de orbitales.html y orbitales_all.html
+dirac.html        de Thomson a Dirac — historia + simulador de 2 partículas
+css/style.css     estilos de orbitales, orbitales_all, quimica, superposicion y dirac
 js/physics.js     orbitales, configuraciones, Slater, muestreo (también corre en Node)
 js/viewer.js      visor 3D en canvas 2D
 js/field.js       campo de densidad y distribución radial
@@ -72,10 +80,18 @@ js/fusion.js      cadena pp: plasma, fusiones, balance de energía
 js/estrella.js    fases estelares + diagrama H–R (modelo esquemático)
 js/agua.js        geometría H₂O, modos vibratorios y visor 3D
 js/estados-agua.js dinámica H₂O rígida en 2D, con búsqueda local de vecinos
+js/chemistry.js   hibridación y orbitales moleculares LCAO
+                    (funciones puras exportadas para pruebas en Node)
+js/quimica.js     interfaz de la vista de hibridación y LCAO-MO
+js/superposicion.js  superposición temporal Ψ(r,t) y dipolo oscilante
+                    (funciones puras exportadas para pruebas en Node)
+js/dirac.js       historia de los modelos + integrador de Dirac (split-step FFT)
+                    (funciones puras exportadas para pruebas en Node)
+js/cloud-worker.js  genera las nubes de puntos fuera del hilo principal
 tests/check.js    pruebas de la física: npm test (o node tests/check.js)
 ```
 
-Las páginas de espectro, fusión, estrella y agua llevan su CSS en la propia página; `css/style.css` es solo de `orbitales.html` y `orbitales_all.html`.
+Las páginas de portada, espectro, fusión, estrella y agua llevan su CSS en la propia página; `css/style.css` lo usan `orbitales`, `orbitales_all`, `quimica`, `superposicion` y `dirac`, que además añaden sus propios estilos en la página. La portada usa `js/physics.js` (nube real del hero y de la tarjeta de orbitales) y `js/specdata.js` (líneas del NIST) sin duplicar física.
 
 ## Pruebas
 
@@ -87,7 +103,7 @@ npm test          # o: node tests/check.js
 
 Se ejecuta en cada push con GitHub Actions (`.github/workflows/test.yml`).
 
-Los módulos que solo corren en el navegador (`viewer.js`, `field.js`, `app.js`, `app_all.js`, `estrella.js`, `agua.js`, `estados-agua.js`) todavía no tienen pruebas de comportamiento: el CI les comprueba al menos la sintaxis en cada push.
+Los módulos que solo corren en el navegador (`viewer.js`, `field.js`, `app.js`, `app_all.js`, `estrella.js`, `agua.js`, `estados-agua.js`, `quimica.js`, `cloud-worker.js`) todavía no tienen pruebas de comportamiento: el CI les comprueba al menos la sintaxis en cada push.
 
 ## Licencia
 
@@ -95,6 +111,6 @@ MIT — ver [`LICENSE`](LICENSE). © 2026 Ángel Luis Robles Fernández.
 
 ## Publicar en la web
 
-Está publicado con GitHub Pages en `https://alrobles.github.io/atomic-simulation/` (y `…/orbitales.html`, `…/orbitales_all.html`, `…/espectro.html`, `…/fusion.html`, `…/estrella.html`, `…/agua.html`, `…/estados-agua.html`), desde la rama `main`, raíz del repositorio (*Settings → Pages → Deploy from branch*).
+Está publicado con GitHub Pages en `https://alrobles.github.io/atomic-simulation/` (portada) y `…/llenado.html`, `…/orbitales.html`, `…/orbitales_all.html`, `…/espectro.html`, `…/superposicion.html`, `…/fusion.html`, `…/estrella.html`, `…/quimica.html`, `…/agua.html`, `…/estados-agua.html`, `…/dirac.html`, desde la rama `main`, raíz del repositorio (*Settings → Pages → Deploy from branch*).
 
 Para probarlo en local basta un servidor estático: `python3 -m http.server 8080` y abrir `http://localhost:8080/`.
