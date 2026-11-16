@@ -60,6 +60,14 @@
       </div>
       <button id="btnRun" class="go">⏸ dinámica</button>
       <button id="btnReset">↺ rearmar</button>
+      <select id="count" aria-label="Número de moléculas">
+        <option value="auto">densidad auto</option>
+        <option value="72">72</option>
+        <option value="96">96</option>
+        <option value="120">120</option>
+        <option value="150">150</option>
+        <option value="180">180</option>
+      </select>
     </div>
     <div id="canvasWrap">
       <svg id="fallback" viewBox="0 0 600 400" role="img" aria-label="Dibujo de respaldo de moléculas de agua">
@@ -92,14 +100,23 @@
     <h2>Temperatura y movimiento</h2>
     <div class="metric"><span>Estado inicial</span><b id="phaseName">Líquido</b></div>
     <div class="metric"><span>Temperatura reducida T*</span><b id="tempRead">0.38</b></div>
-    <div class="metric"><span>Moléculas</span><b id="nRead">42</b></div>
+    <div class="metric"><span>Moléculas</span><b id="nRead">—</b></div>
+    <div class="metric"><span>Recuento elegido</span><b id="countRead">auto</b></div>
     <div class="metric"><span>Puentes H cercanos</span><b id="hbRead">—</b></div>
     <div class="range"><span>calentar</span><input id="temp" type="range" min="8" max="150" value="38"><span id="tempVal">0.38</span></div>
+    <div class="range"><span>moléculas</span><select id="countSide" style="background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:4px 8px;font-size:12px">
+      <option value="auto">automático</option>
+      <option value="72">72</option>
+      <option value="96">96</option>
+      <option value="120">120</option>
+      <option value="150">150</option>
+      <option value="180">180</option>
+    </select><span id="countReadSide" class="note"></span></div>
     <div class="callout" id="phaseDesc"></div>
     <h2>¿Cómo interactúan?</h2>
     <p>Las moléculas son cuerpos rígidos con un oxígeno y dos hidrógenos. El modelo calcula fuerzas entre vecinas: una atracción de corto alcance tipo <b>Lennard‑Jones</b> y una atracción direccional simplificada para los puentes de hidrógeno. La orientación también puede girar por el torque.</p>
     <p>Arranca desde una configuración sólida, líquida o gaseosa y cambia T*. Al calentar, las moléculas ganan movimiento y la estructura se desordena; al enfriar, las atracciones las agrupan.</p>
-    <div class="callout"><b>Estrategia de cómputo:</b> una cuadrícula espacial busca solo moléculas cercanas. Así evitamos comparar cada molécula contra todas las demás (O(N²)); la búsqueda de vecinos se aproxima a O(N) para una densidad fija. Son 42 moléculas para que el movimiento fluido funcione en una laptop sin GPU especial.</div>
+    <div class="callout"><b>Estrategia de cómputo:</b> una cuadrícula espacial busca solo moléculas cercanas. Así evitamos comparar cada molécula contra todas las demás (O(N²)); la búsqueda de vecinos se aproxima a O(N) para una densidad fija. El recuento se adapta al área visible y al rendimiento: en automático suele quedar entre ~72 y ~150 moléculas en una laptop, y puedes fijarlo manualmente hasta 180. La búsqueda espacial mantiene el costo aproximadamente lineal en vez de comparar todos los pares.</div>
     <p class="note"><b>Modelo cualitativo 2D, no simulación cuantitativa del diagrama de fases.</b> T* es temperatura reducida, no kelvin; las dimensiones y velocidades no están a escala temporal real. No se calculan electrones, enlaces covalentes ni cambios químicos: cada H₂O conserva su forma. El puente de hidrógeno se representa con una interacción efectiva orientacional inspirada en la estructura del agua.</p>
     <p class="note">La página <a href="agua.html" style="color:#58a6ff">Molécula de agua</a> muestra con más detalle el ángulo, la polaridad y la densidad electrónica esquemática de una sola molécula.</p>
   </aside>

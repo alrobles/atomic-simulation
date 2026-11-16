@@ -4,7 +4,9 @@
 (function () {
 "use strict";
 
-const N = 42;
+const MIN_PARTICLES = 54;
+const MAX_PARTICLES = 180;
+const DEFAULT_PARTICLES = 96;
 const SIGMA = 1;
 const CUTOFF = 2.5 * SIGMA;
 const EPS_LJ = 0.22;
@@ -45,8 +47,9 @@ const canvas = $("sim"), ctx = canvas.getContext("2d");
 const COLORS = { bg: "#0d1117", O: "#f85149", H: "#e6edf3", hb: "#58a6ff", gold: "#f0c000" };
 
 let molecules = [], bonds = [], phase = "liquid", targetT = PHASES.liquid.target;
+let particleTarget = DEFAULT_PARTICLES, manualCount = 0, perfEma = 16.7, lastAdapt = 0;
 let paused = false, box = { x: 0, y: 0, w: 0, h: 0 }, unit = 40;
-let W = 0, H = 0, frameCount = 0, statCount = 0;
+let W = 0, H = 0, frameCount = 0, statCount = 0, fpsWindow = [];
 let last = performance.now(), prng = 90210;
 
 function rand() {
@@ -69,17 +72,15 @@ function fit() {
 }
 
 function setBox() {
-  const fullW = Math.max(9, (W - 32) / unit);
-  const fullH = Math.max(8, (H - 32) / unit);
-  if (phase === "gas") {
-    box.w = fullW; box.h = fullH;
-  } else if (phase === "liquid") {
-    box.w = Math.min(fullW, Math.max(10.5, fullW * 0.76));
-    box.h = Math.min(fullH, Math.max(8.2, fullH * 0.72));
-  } else {
-    box.w = Math.min(fullW, Math.max(10, 11.2));
-    box.h = Math.min(fullH, Math.max(8, 9.2));
-  }
+  const n = molecules.length || particleTarget;
+  const density = phase === "gas" ? 0.30 : phase === "liquid" ? 0.52 : 0.62;
+  const aspect = phase === "gas" ? 1.22 : 0.82;
+  const maxArea = Math.max(1, ((W - 40) / unit) * ((H - 40) / unit));
+  const need = Math.sqrt(n / density);
+  let w = need, h = need * aspect;
+  if (w * h > maxArea) { const k = Math.sqrt(maxArea / (w * h)); w *= k; h *= k; }
+  box.w = Math.max(8, w);
+  box.h = Math.max(6.5, h);
   // Molecule coordinates are local to the centered simulation box.
   box.x = 0;
   box.y = 0;
@@ -98,7 +99,8 @@ function newMolecule(x, y, theta, thermalScale = 0.45) {
 function initializePositions() {
   molecules = [];
   if (phase === "solid") {
-    const nx = 7, ny = 6, spacing = 1.08;
+    const nx = Math.max(4, Math.ceil(Math.sqrt(particleTarget * box.w / Math.max(1, box.h))));
+    const ny = Math.ceil(particleTarget / nx), spacing = Math.min(1.15, Math.max(0.88, Math.sqrt((box.w * box.h) / particleTarget)));
     const gridW = (nx - 1) * spacing, gridH = (ny - 1) * spacing * 0.88;
     for (let row = 0; row < ny; row++) {
       for (let col = 0; col < nx; col++) {
@@ -109,7 +111,7 @@ function initializePositions() {
     }
   } else {
     let attempts = 0;
-    while (molecules.length < N && attempts++ < 12000) {
+    while (molecules.length < particleTarget && attempts++ < 12000) {
       const x = box.x + 0.8 + rand() * (box.w - 1.6);
       const y = box.y + 0.8 + rand() * (box.h - 1.6);
       if (molecules.every(m => (m.x - x) ** 2 + (m.y - y) ** 2 > 0.78 ** 2)) {
@@ -117,14 +119,71 @@ function initializePositions() {
       }
     }
     // Fallback only for narrow/mobile boxes where rejection sampling packs slowly.
-    while (molecules.length < N) {
-      const i = molecules.length, cols = 7;
+    while (molecules.length < particleTarget) {
+      const i = molecules.length, cols = Math.max(4, Math.ceil(Math.sqrt(particleTarget)));
       const x = box.x + 0.9 + (i % cols) * Math.max(0.9, (box.w - 1.8) / (cols - 1));
       const y = box.y + 0.9 + Math.floor(i / cols) * 0.95;
       molecules.push(newMolecule(Math.min(box.x + box.w - 0.6, x), Math.min(box.y + box.h - 0.6, y), rand() * Math.PI * 2, Math.sqrt(targetT) * 0.78));
     }
   }
   bonds = [];
+}
+
+function resizeParticles(next) {
+  next = Math.max(MIN_PARTICLES, Math.min(MAX_PARTICLES, Math.round(next)));
+  if (next === molecules.length) return;
+  if (next < molecules.length) { molecules.length = next; }
+  else {
+    while (molecules.length < next) {
+      const x = box.x + 0.8 + rand() * Math.max(1, box.w - 1.6);
+      const y = box.y + 0.8 + rand() * Math.max(1, box.h - 1.6);
+      molecules.push(newMolecule(x, y, rand() * Math.PI * 2, Math.sqrt(targetT) * 0.55));
+    }
+  }
+  particleTarget = next;
+  setBox();
+  computeForces();
+  updateStats();
+}
+
+function chooseParticleCount(mode) {
+  if (mode === "auto") {
+    const area = Math.max(1, W * H);
+    const base = Math.round(area / 2600);
+    particleTarget = Math.max(MIN_PARTICLES, Math.min(MAX_PARTICLES, base));
+    manualCount = 0;
+  } else {
+    manualCount = Math.max(MIN_PARTICLES, Math.min(MAX_PARTICLES, +mode || DEFAULT_PARTICLES));
+    particleTarget = manualCount;
+  }
+  resizeParticles(particleTarget);
+  const countRead = document.getElementById("countRead");
+  const countReadSide = document.getElementById("countReadSide");
+  const countSel = document.getElementById("count");
+  const countSelSide = document.getElementById("countSide");
+  const label = manualCount ? String(particleTarget) : "auto";
+  if (countRead) countRead.textContent = particleTarget;
+  if (countReadSide) countReadSide.textContent = `${particleTarget} (${label})`;
+  if (countSel) countSel.value = mode === "auto" ? "auto" : String(particleTarget);
+  if (countSelSide) countSelSide.value = mode === "auto" ? "auto" : String(particleTarget);
+}
+
+function adaptParticles(dtMs) {
+  perfEma = perfEma * 0.92 + dtMs * 0.08;
+  fpsWindow.push(dtMs);
+  if (fpsWindow.length > 45) fpsWindow.shift();
+  const now = performance.now();
+  if (now - lastAdapt < 1800) return;
+  lastAdapt = now;
+  const avg = fpsWindow.reduce((a, b) => a + b, 0) / fpsWindow.length;
+  if (manualCount) return;
+  if (avg > 24 && particleTarget < MAX_PARTICLES) {
+    resizeParticles(Math.min(MAX_PARTICLES, particleTarget + Math.max(6, Math.round(particleTarget * 0.08))));
+  } else if (avg > 34 && particleTarget < MAX_PARTICLES) {
+    resizeParticles(Math.min(MAX_PARTICLES, particleTarget + Math.max(4, Math.round(particleTarget * 0.05))));
+  } else if (avg < 13 && particleTarget > MIN_PARTICLES) {
+    resizeParticles(Math.max(MIN_PARTICLES, particleTarget - Math.max(6, Math.round(particleTarget * 0.10))));
+  }
 }
 
 function reset(nextPhase = phase) {
@@ -135,6 +194,7 @@ function reset(nextPhase = phase) {
   $("tempRead").textContent = targetT.toFixed(2);
   document.querySelectorAll("#phases button").forEach(b => b.classList.toggle("on", b.dataset.phase === phase));
   if (!fit()) { requestAnimationFrame(() => reset(nextPhase)); return; }
+  particleTarget = manualCount || particleTarget;
   setBox();
   prng = 90210 + Math.round(targetT * 1000);
   initializePositions();
@@ -284,6 +344,10 @@ function updateStats() {
   $("phaseName").textContent = phaseLabel;
   $("tempRead").textContent = targetT.toFixed(2);
   $("nRead").textContent = molecules.length;
+  const countRead = $("countRead");
+  const countReadSide = $("countReadSide");
+  if (countRead) countRead.textContent = particleTarget;
+  if (countReadSide) countReadSide.textContent = `${particleTarget} (${manualCount ? "manual" : "auto"})`;
   $("hbRead").textContent = bonds.length;
   $("tempVal").textContent = targetT.toFixed(2);
   $("label").textContent = `${phaseLabel} · H₂O rígidas · T* ${targetT.toFixed(2)} · ${bonds.length} puentes H próximos`;
@@ -301,6 +365,9 @@ $("btnRun").onclick = () => {
   paused = !paused;
   $("btnRun").textContent = paused ? "▶ continuar" : "⏸ dinámica";
 };
+const syncCount = e => chooseParticleCount(e.target.value);
+$("count").onchange = syncCount;
+$("countSide").onchange = syncCount;
 $("temp").oninput = e => {
   targetT = +e.target.value / 100;
   $("tempVal").textContent = targetT.toFixed(2);
@@ -309,6 +376,7 @@ $("temp").oninput = e => {
 window.addEventListener("resize", () => reset(phase));
 
 function frame(now) {
+  const frameStart = performance.now();
   const realDt = Math.min(0.04, Math.max(0, (now - last) / 1000));
   last = now;
   if (!paused && molecules.length) {
@@ -320,13 +388,14 @@ function frame(now) {
   }
   draw();
   if (++frameCount % 12 === 0) updateStats();
+  adaptParticles(performance.now() - frameStart);
   requestAnimationFrame(frame);
 }
 
-if (fit()) reset("liquid");
+if (fit()) { chooseParticleCount("auto"); reset("liquid"); }
 requestAnimationFrame(frame);
 })();
 
 if (typeof module !== "undefined")
-  module.exports = { N, SIGMA, CUTOFF, EPS_LJ, EPS_HB, ljPotential, donorAlignment, PHASES };
+  module.exports = { MIN_PARTICLES, MAX_PARTICLES, DEFAULT_PARTICLES, SIGMA, CUTOFF, EPS_LJ, EPS_HB, ljPotential, donorAlignment, PHASES };
 })();
