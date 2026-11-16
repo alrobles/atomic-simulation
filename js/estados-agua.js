@@ -180,11 +180,9 @@ function adaptParticles(dtMs) {
   lastAdapt = now;
   const avg = fpsWindow.reduce((a, b) => a + b, 0) / fpsWindow.length;
   if (manualCount) return;
-  if (avg > 30 && particleTarget > MIN_PARTICLES) {
-    resizeParticles(Math.max(MIN_PARTICLES, particleTarget - Math.max(6, Math.round(particleTarget * 0.10))));
-  } else if (avg > 22 && particleTarget > MIN_PARTICLES) {
-    resizeParticles(Math.max(MIN_PARTICLES, particleTarget - Math.max(4, Math.round(particleTarget * 0.06))));
-  } else if (avg < 12 && particleTarget < MAX_PARTICLES) {
+  if (avg > 33 && particleTarget > MIN_PARTICLES) {
+    resizeParticles(Math.max(MIN_PARTICLES, particleTarget - Math.max(6, Math.round(particleTarget * 0.08))));
+  } else if (avg < 16 && particleTarget < MAX_PARTICLES) {
     resizeParticles(Math.min(MAX_PARTICLES, particleTarget + Math.max(4, Math.round(particleTarget * 0.05))));
   }
 }
