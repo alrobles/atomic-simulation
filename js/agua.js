@@ -1,0 +1,318 @@
+/* agua.js — geometría y visualización cualitativa de H₂O.
+ * La densidad dibujada es un esquema VSEPR, no un cálculo ab initio. */
+(function () {
+"use strict";
+
+const ANGLE_DEG = 104.5;
+const BOND_ANGSTROM = 0.9584;
+const DIPOLE_DEBYE = 1.85;
+
+/** Coordenadas nucleares en el plano molecular; O está en el origen. */
+function waterGeometry(angleDeg = ANGLE_DEG, bondAngstrom = BOND_ANGSTROM) {
+  const a = angleDeg * Math.PI / 360;
+  return {
+    O: [0, 0, 0],
+    H1: [bondAngstrom * Math.sin(a), -bondAngstrom * Math.cos(a), 0],
+    H2: [-bondAngstrom * Math.sin(a), -bondAngstrom * Math.cos(a), 0],
+  };
+}
+
+/** Ángulo entre los dos enlaces en grados, para verificar las coordenadas. */
+function angleBetweenBonds(g) {
+  const [ax, ay, az] = g.H1, [bx, by, bz] = g.H2;
+  const dot = ax * bx + ay * by + az * bz;
+  const na = Math.hypot(ax, ay, az), nb = Math.hypot(bx, by, bz);
+  return Math.acos(Math.max(-1, Math.min(1, dot / (na * nb)))) * 180 / Math.PI;
+}
+
+// ---------- navegador ----------
+if (typeof document !== "undefined") (function () {
+const $ = id => document.getElementById(id);
+const canvas = $("mol"), ctx = canvas.getContext("2d");
+const colors = {
+  bg: "#0d1117", oxygen: "#f85149", hydrogen: "#e6edf3",
+  bond: "#9da7b3", density: "#58a6ff", bondDensity: "#9acbff",
+  gold: "#f0c000", text: "#c9d1d9", muted: "#8b949e",
+};
+
+let view = "structure", vibMode = "symmetric", playing = false, spinning = true;
+let angleDeg = ANGLE_DEG, yaw = -0.38, pitch = 0.2, zoom = 1;
+let drag = null, lastTime = performance.now(), animTime = 0;
+let W = 0, H = 0;
+
+// Fija la nube aleatoria para que no parpadee entre fotogramas.
+let seed = 73421;
+function random() {
+  seed = (1664525 * seed + 1013904223) >>> 0;
+  return seed / 4294967296;
+}
+function normal() {
+  const u = Math.max(random(), 1e-9), v = random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+const densitySamples = [];
+for (let i = 0; i < 150; i++) {
+  densitySamples.push({ kind: "core", x: normal() * 0.14, y: normal() * 0.14, z: normal() * 0.14 });
+}
+for (let pair = 0; pair < 2; pair++) {
+  for (let i = 0; i < 260; i++) {
+    densitySamples.push({
+      kind: "lone", pair,
+      x: normal() * 0.17, y: normal() * 0.23, z: normal() * 0.14,
+    });
+  }
+}
+for (let bond = 0; bond < 2; bond++) {
+  for (let i = 0; i < 240; i++) {
+    densitySamples.push({
+      kind: "bond", bond,
+      t: 0.24 + random() * 0.68,
+      n1: normal() * 0.075,
+      n2: normal() * 0.075,
+    });
+  }
+}
+
+function fit() {
+  const dpr = window.devicePixelRatio || 1;
+  W = canvas.clientWidth; H = canvas.clientHeight;
+  if (!W || !H) return false;
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return true;
+}
+
+function project(p) {
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const x1 = p[0] * cy - p[2] * sy;
+  const z1 = p[0] * sy + p[2] * cy;
+  const y2 = p[1] * cp - z1 * sp;
+  const z2 = p[1] * sp + z1 * cp;
+  const perspective = 1 / (1 + z2 * 0.13);
+  const scale = Math.min(W, H) * 0.43 * zoom * perspective;
+  return { x: W / 2 + x1 * scale, y: H * 0.52 - y2 * scale, z: z2, scale };
+}
+
+function animatedGeometry() {
+  let a = angleDeg, s1 = 0, s2 = 0;
+  if (playing) {
+    const wave = Math.sin(animTime * 2.2);
+    if (vibMode === "symmetric") s1 = s2 = 0.07 * wave;
+    else if (vibMode === "asymmetric") { s1 = 0.07 * wave; s2 = -0.07 * wave; }
+    else a += 8 * wave;
+  }
+  const g = waterGeometry(a, BOND_ANGSTROM);
+  g.H1 = g.H1.map(v => v * (1 + s1));
+  g.H2 = g.H2.map(v => v * (1 + s2));
+  return { g, angle: a };
+}
+
+function drawBackground() {
+  ctx.fillStyle = colors.bg;
+  ctx.fillRect(0, 0, W, H);
+  const glow = ctx.createRadialGradient(W * 0.5, H * 0.52, 10, W * 0.5, H * 0.52, Math.max(W, H) * 0.62);
+  glow.addColorStop(0, "rgba(28,54,76,0.28)");
+  glow.addColorStop(1, "rgba(13,17,23,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "rgba(139,148,158,0.12)";
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W * 0.12, H * 0.52); ctx.lineTo(W * 0.88, H * 0.52);
+  ctx.moveTo(W * 0.5, H * 0.15); ctx.lineTo(W * 0.5, H * 0.88); ctx.stroke();
+}
+
+function lonePairCenter(pair, angle) {
+  // Dos lóbulos esquemáticos en el lado opuesto a los enlaces O–H.
+  const a = (42 + (angle - ANGLE_DEG) * 0.18) * Math.PI / 180;
+  return [(pair ? -1 : 1) * Math.sin(a) * 0.48, Math.cos(a) * 0.48, 0];
+}
+
+function drawDensity(g, angle) {
+  // Muestras didácticas de regiones electrónicas; no son electrones individuales.
+  for (const q of densitySamples) {
+    let p, color, alpha, size;
+    if (q.kind === "core") {
+      p = [q.x, q.y, q.z];
+      color = colors.oxygen; alpha = 0.28; size = 1.8;
+    } else if (q.kind === "lone") {
+      const c = lonePairCenter(q.pair, angle);
+      p = [c[0] + q.x, c[1] + q.y, c[2] + q.z];
+      color = colors.density; alpha = 0.35; size = 1.65;
+    } else {
+      const h = q.bond ? g.H2 : g.H1;
+      const dx = h[0], dy = h[1], len = Math.hypot(dx, dy) || 1;
+      const px = -dy / len, py = dx / len;
+      p = [h[0] * q.t + px * q.n1, h[1] * q.t + py * q.n1, q.n2];
+      color = colors.bondDensity; alpha = 0.26; size = 1.55;
+    }
+    const s = project(p);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.fillRect(s.x, s.y, size, size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBond(a, b) {
+  const p = project(a), q = project(b);
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = 11 * Math.min(p.scale, q.scale) / (Math.min(W, H) * 0.43);
+  ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  ctx.strokeStyle = colors.bond; ctx.lineWidth = 6 * Math.min(p.scale, q.scale) / (Math.min(W, H) * 0.43);
+  ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  ctx.restore();
+}
+
+function drawAtom(atom, label, color, radius, charge) {
+  const p = project(atom);
+  const r = radius * Math.min(W, H) / 500 * zoom * (1 + p.z * 0.07);
+  const grad = ctx.createRadialGradient(p.x - r * 0.32, p.y - r * 0.38, r * 0.08, p.x, p.y, r);
+  if (color === colors.oxygen) {
+    grad.addColorStop(0, "#ffb4a9"); grad.addColorStop(0.48, "#f85149"); grad.addColorStop(1, "#7d2023");
+  } else {
+    grad.addColorStop(0, "#ffffff"); grad.addColorStop(0.55, "#dce7ef"); grad.addColorStop(1, "#718096");
+  }
+  ctx.save();
+  ctx.shadowColor = color; ctx.shadowBlur = label === "O" ? 22 : 12;
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = "#0d1117"; ctx.font = `700 ${Math.max(11, r * 0.8)}px system-ui`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(label, p.x, p.y + 1);
+  ctx.textBaseline = "alphabetic";
+  if (view === "density") {
+    ctx.fillStyle = label === "O" ? "#ff8a80" : "#e6edf3";
+    ctx.font = "bold 12px system-ui"; ctx.textAlign = "center";
+    ctx.fillText(charge, p.x, p.y - r - 7);
+  }
+}
+
+function drawAngle(g, angle) {
+  const o = project(g.O), a = project(g.H1), b = project(g.H2);
+  ctx.save();
+  ctx.strokeStyle = "rgba(240,192,0,0.72)"; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(a.x, a.y); ctx.moveTo(o.x, o.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  ctx.setLineDash([]);
+  const ra = Math.atan2(a.y - o.y, a.x - o.x), rb = Math.atan2(b.y - o.y, b.x - o.x);
+  ctx.beginPath(); ctx.arc(o.x, o.y, Math.min(W, H) * 0.13, ra, rb); ctx.stroke();
+  ctx.fillStyle = colors.gold; ctx.font = "bold 13px system-ui"; ctx.textAlign = "center";
+  ctx.fillText(`${angle.toFixed(1)}°`, o.x, o.y + Math.min(H * 0.17, 95));
+  ctx.restore();
+}
+
+function drawLabels(g) {
+  ctx.fillStyle = colors.muted; ctx.font = "12px system-ui"; ctx.textAlign = "center";
+  const c = project([0, 0.83, 0]);
+  ctx.fillText("pares libres (esquema)", c.x, c.y - 10);
+  // Flecha del dipolo: desde el lado positivo hacia el oxígeno.
+  const o = project(g.O), mid = project([0, -0.58, 0]);
+  ctx.strokeStyle = colors.gold; ctx.fillStyle = colors.gold; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(mid.x, mid.y); ctx.lineTo(o.x, o.y - 26); ctx.stroke();
+  const ang = Math.atan2(o.y - 26 - mid.y, o.x - mid.x);
+  ctx.beginPath(); ctx.moveTo(o.x, o.y - 26);
+  ctx.lineTo(o.x - 7 * Math.cos(ang - 0.45), o.y - 26 - 7 * Math.sin(ang - 0.45));
+  ctx.lineTo(o.x - 7 * Math.cos(ang + 0.45), o.y - 26 - 7 * Math.sin(ang + 0.45));
+  ctx.closePath(); ctx.fill();
+  ctx.font = "11px system-ui"; ctx.fillText("μ", mid.x + 13, mid.y);
+}
+
+function updateText(angle) {
+  const labels = {
+    structure: ["Molécula", "Modelo de bolas y varillas: O rojo, H claro; los núcleos forman un ángulo de 104.5°."],
+    density: ["Densidad electrónica (esquema)", "Puntos = muestras ilustrativas de densidad en enlaces y pares libres; no son electrones individuales ni un cálculo molecular exacto."],
+    vibration: ["Vibración molecular", vibMode === "bend" ? "Flexión: cambia el ángulo H–O–H; la animación está ralentizada para verla." : vibMode === "asymmetric" ? "Estiramiento asimétrico: un enlace O–H se alarga mientras el otro se acorta." : "Estiramiento simétrico: ambos enlaces O–H se alargan y acortan juntos."],
+  };
+  $("sceneLabel").innerHTML = `<b>${labels[view][0]}</b> · ${labels[view][1]}`;
+  $("modeInfo").textContent = `Ángulo actual: ${angle.toFixed(1)}° · longitud O–H: ${BOND_ANGSTROM.toFixed(4)} Å · momento dipolar: ${DIPOLE_DEBYE} D`;
+  $("densityText").innerHTML = view === "density"
+    ? "Los puntos son <b>muestras</b> de un esquema de densidad electrónica, no electrones individuales."
+    : "La vista <b>Molécula</b> muestra núcleos y enlaces como bolas y varillas: no dibuja electrones individuales.";
+  $("angleControl").hidden = view === "vibration";
+  $("vibControls").hidden = view !== "vibration";
+}
+
+function draw(now) {
+  if (!fit()) return;
+  drawBackground();
+  if (spinning && !drag) yaw += 0.0018;
+  const { g, angle } = animatedGeometry();
+  if (view === "density") drawDensity(g, angle);
+  // Bonds are behind the atomic spheres.
+  drawBond(g.O, g.H1); drawBond(g.O, g.H2);
+  drawAngle(g, angle);
+  if (view !== "structure") drawLabels(g);
+  const atoms = [
+    { xyz: g.O, label: "O", color: colors.oxygen, radius: 26, charge: "δ−" },
+    { xyz: g.H1, label: "H", color: colors.hydrogen, radius: 15, charge: "δ+" },
+    { xyz: g.H2, label: "H", color: colors.hydrogen, radius: 15, charge: "δ+" },
+  ].map(a => ({ ...a, depth: project(a.xyz).z })).sort((a, b) => a.depth - b.depth);
+  atoms.forEach(a => drawAtom(a.xyz, a.label, a.color, a.radius, a.charge));
+  updateText(angle);
+}
+
+function setView(next) {
+  view = next;
+  document.querySelectorAll("#views button").forEach(b => b.classList.toggle("on", b.dataset.view === view));
+  if (view === "vibration") {
+    $("btnVib").disabled = false;
+  } else {
+    playing = false;
+    $("btnVib").textContent = "▶ animar";
+  }
+}
+
+canvas.addEventListener("pointerdown", e => {
+  drag = [e.clientX, e.clientY];
+  canvas.classList.add("drag");
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove", e => {
+  if (!drag) return;
+  yaw += (e.clientX - drag[0]) * 0.009;
+  pitch = Math.max(-1.35, Math.min(1.35, pitch + (e.clientY - drag[1]) * 0.009));
+  drag = [e.clientX, e.clientY];
+});
+canvas.addEventListener("pointerup", () => { drag = null; canvas.classList.remove("drag"); });
+canvas.addEventListener("pointercancel", () => { drag = null; canvas.classList.remove("drag"); });
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  zoom = Math.max(0.55, Math.min(2.3, zoom * (e.deltaY < 0 ? 1.08 : 0.92)));
+}, { passive: false });
+
+document.querySelectorAll("#views button").forEach(b => b.onclick = () => setView(b.dataset.view));
+document.querySelectorAll("#vibModes button").forEach(b => b.onclick = () => {
+  vibMode = b.dataset.mode;
+  document.querySelectorAll("#vibModes button").forEach(x => x.classList.toggle("on", x === b));
+});
+$("angle").oninput = e => {
+  angleDeg = +e.target.value;
+  $("angleVal").textContent = `${angleDeg.toFixed(1)}°`;
+};
+$("btnVib").onclick = () => {
+  if (view !== "vibration") setView("vibration");
+  playing = !playing;
+  $("btnVib").textContent = playing ? "⏸ pausar" : "▶ animar";
+};
+$("btnSpin").onclick = () => {
+  spinning = !spinning;
+  $("btnSpin").textContent = spinning ? "⏸ giro" : "▶ giro";
+};
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+  if (playing) animTime += dt;
+  draw(now);
+  requestAnimationFrame(frame);
+}
+draw(performance.now());
+requestAnimationFrame(frame);
+})();
+
+if (typeof module !== "undefined")
+  module.exports = { ANGLE_DEG, BOND_ANGSTROM, DIPOLE_DEBYE, waterGeometry, angleBetweenBonds };
+})();

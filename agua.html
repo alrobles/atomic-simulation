@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La molécula de agua — geometría y polaridad</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;height:100%}
+  body{font-family:system-ui,"Segoe UI",sans-serif;background:#0d1117;color:#e6edf3;display:flex;flex-direction:column}
+  header{padding:10px 16px 8px;border-bottom:1px solid #30363d}
+  h1{font-size:20px;margin:0 0 8px}
+  h1 span{font-size:14px;font-weight:400;color:#8b949e;margin-left:8px}
+  .alt{margin:6px 0 0;font-size:12px}
+  .alt a{color:#58a6ff;text-decoration:none}
+  .alt a:hover{text-decoration:underline}
+  main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,.85fr)}
+  #stage{position:relative;min-height:0;display:flex;flex-direction:column;border-right:1px solid #30363d}
+  #toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid #21262d}
+  .seg{display:flex;gap:0}
+  button{background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer}
+  button:hover{background:#30363d}
+  .seg button{border-radius:0;margin-left:-1px}
+  .seg button:first-child{border-radius:6px 0 0 6px;margin-left:0}
+  .seg button:last-child{border-radius:0 6px 6px 0}
+  .seg button.on{background:#1f6feb;border-color:#1f6feb}
+  button.go{background:#1f6feb;border-color:#1f6feb;font-weight:600}
+  #motion{display:flex;align-items:center;gap:6px;margin-left:auto}
+  #canvasWrap{position:relative;flex:1;min-height:0}
+  #mol{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  #mol.drag{cursor:grabbing}
+  #sceneLabel{position:absolute;top:12px;left:14px;right:14px;pointer-events:none;font-size:13px;color:#c9d1d9;text-shadow:0 1px 4px #000}
+  #sceneLabel b{color:#f0c000}
+  #legend{position:absolute;left:14px;bottom:12px;display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#8b949e;text-shadow:0 1px 3px #000;pointer-events:none}
+  #legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+  #side{overflow-y:auto;padding:14px 18px;font-size:14px;line-height:1.5}
+  h2{font-size:16px;margin:4px 0 8px;color:#f0c000}
+  h3{font-size:13px;margin:12px 0 4px}
+  .metric{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px dashed #21262d;font-size:13px}
+  .metric b{text-align:right}
+  .callout{background:#161b22;border:1px solid #30363d;border-left:3px solid #58a6ff;border-radius:7px;padding:9px 11px;margin:10px 0;font-size:13px}
+  .callout.gold{border-left-color:#f0c000}
+  .callout b{color:#fff}
+  .note{color:#8b949e;font-size:12px}
+  .explain p{margin:8px 0}
+  .explain b{color:#fff}
+  .sliderrow{display:flex;align-items:center;gap:8px;margin:8px 0}
+  input[type=range]{flex:1;accent-color:#f0c000}
+  #angleVal{min-width:58px;text-align:right;font-weight:700}
+  #modeInfo{min-height:35px;margin-top:8px}
+  @media(max-width:900px){
+    html,body{height:auto}
+    main{display:flex;flex-direction:column}
+    #stage{height:58vh;min-height:360px;border-right:0;border-bottom:1px solid #30363d}
+    #side{overflow:visible}
+    #motion{margin-left:0}
+  }
+  @media(max-width:520px){
+    h1 span{display:block;margin:2px 0 0}
+    #stage{height:54vh;min-height:320px}
+    #toolbar{gap:6px}
+    .seg button{padding:6px 7px;font-size:11px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Una molécula de agua <span>geometría, enlaces y polaridad</span></h1>
+  <p class="alt"><a href="index.html">← llenado electrónico</a> · <a href="orbitales.html">átomos y orbitales</a> · <a href="espectro.html">espectro</a> · <a href="fusion.html">fusión nuclear</a> · <a href="estrella.html">vida estelar</a></p>
+</header>
+
+<main>
+  <section id="stage">
+    <div id="toolbar">
+      <div class="seg" id="views" aria-label="Vista molecular">
+        <button class="on" data-view="structure">Molécula</button>
+        <button data-view="density">Densidad</button>
+        <button data-view="vibration">Vibración</button>
+      </div>
+      <div id="motion">
+        <button id="btnVib" class="go">▶ animar</button>
+        <button id="btnSpin" title="Alternar rotación automática">⏸ giro</button>
+      </div>
+    </div>
+    <div id="canvasWrap">
+      <canvas id="mol" aria-label="Modelo interactivo de la molécula de agua"></canvas>
+      <div id="sceneLabel"></div>
+      <div id="legend">
+        <span><i style="background:#f85149"></i>oxígeno</span>
+        <span><i style="background:#e6edf3"></i>hidrógeno</span>
+        <span><i style="background:#58a6ff"></i>regiones ricas en electrones</span>
+      </div>
+    </div>
+  </section>
+  <aside id="side">
+    <h2>H₂O: pequeña, pero no lineal</h2>
+    <div class="metric"><span>Ángulo H–O–H</span><b>104.5°</b></div>
+    <div class="metric"><span>Longitud O–H</span><b>0.9584 Å</b></div>
+    <div class="metric"><span>Geometría</span><b>angular (doblada)</b></div>
+    <div class="metric"><span>Momento dipolar</span><b>1.85 D</b></div>
+
+    <div class="callout gold"><b>¿Por qué se dobla?</b> El oxígeno tiene dos pares enlazantes y dos pares libres. Sus cuatro regiones electrónicas se acomodan aproximadamente como un tetraedro; al mirar solo los núcleos, queda un ángulo de 104.5°.</div>
+
+    <div id="modeInfo" class="note"></div>
+    <div id="angleControl">
+      <h3>Explora el ángulo</h3>
+      <div class="sliderrow"><input id="angle" type="range" min="90" max="180" step="0.5" value="104.5"><span id="angleVal">104.5°</span></div>
+      <div class="note">Al abrir el ángulo hacia 180° se compara con una molécula lineal; el agua real está cerca de 104.5°.</div>
+    </div>
+    <div id="vibControls" hidden>
+      <h3>Modos normales</h3>
+      <div class="seg" id="vibModes">
+        <button class="on" data-mode="symmetric">Estiramiento sim.</button>
+        <button data-mode="bend">Flexión</button>
+        <button data-mode="asymmetric">Estiramiento asim.</button>
+      </div>
+      <p class="note">La animación se ralentiza enormemente para poder verla. Frecuencias reales aproximadas en fase gaseosa: 3657, 1595 y 3756 cm⁻¹.</p>
+    </div>
+
+    <h2>¿Qué muestra la nube?</h2>
+    <p id="densityText">La vista <b>Molécula</b> muestra núcleos y enlaces como bolas y varillas: no dibuja electrones individuales.</p>
+    <div class="callout"><b>En Densidad:</b> los puntos son muestras esquemáticas de regiones donde se concentra la densidad electrónica —pares libres del oxígeno y enlaces O–H—, no electrones dibujados uno por uno. El oxígeno atrae más esa densidad (δ−); los hidrógenos quedan parcialmente positivos (δ+).</div>
+
+    <div class="explain">
+      <h2>Un modelo, no una foto</h2>
+      <p><b>Enlace covalente:</b> cada O–H comparte densidad electrónica. La molécula tiene 10 electrones en total: 8 del oxígeno y 1 de cada hidrógeno. En esta vista no se asigna una trayectoria a ninguno.</p>
+      <p><b>Polaridad:</b> como la forma es angular, las polaridades de los dos enlaces no se cancelan. La molécula tiene un extremo parcialmente negativo (O) y otro parcialmente positivo (entre los H).</p>
+      <p class="note">Geometría de equilibrio experimental aproximada para H₂O gaseosa. La nube y los pares libres son ilustraciones didácticas VSEPR; no son una función de onda molecular calculada. Un cálculo electrónico real requiere orbitales moleculares y correlación electrónica, no solo superponer orbitales atómicos de hidrógeno.</p>
+    </div>
+  </aside>
+</main>
+<script src="js/agua.js"></script>
+</body>
+</html>
