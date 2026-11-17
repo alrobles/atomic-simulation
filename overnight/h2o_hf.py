@@ -27,7 +27,9 @@ mf.kernel()
 print("E_RHF (Hartree):", mf.e_tot)
 
 # Retícula de evaluación por rebanadas z (memoria acotada):
-# [-6,6] Å por lado, N=200 → ~0.06 Å de resolución
+# eval_gto espera coordenadas en BOHR → [-6,6] bohr ≈ [-3.18,3.18] Å, N=200.
+# (export_density.py convierte bohr→Å al exportar; ver export_mo_surfaces.py
+# para la malla ampliada usada en las isosuperficies MO.)
 N = 200
 lim = 6.0
 xs = np.linspace(-lim, lim, N)

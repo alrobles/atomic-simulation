@@ -1,0 +1,36 @@
+{
+ "method": "RHF/STO-3G (PySCF)",
+ "iso_frac_of_max": 0.1,
+ "grid": {
+  "n": 160,
+  "lim_bohr": 11.5,
+  "lim_angstrom": 6.085537925384499
+ },
+ "unit_export": "Angstrom",
+ "mos": {
+  "homo1": {
+   "iso_au": 0.06900423169136048,
+   "psi_max_au": 0.6900423169136047,
+   "voxels": 8568,
+   "edge_voxels": 0,
+   "pos": 44608,
+   "neg": 23936
+  },
+  "homo": {
+   "iso_au": 0.06882705688476563,
+   "psi_max_au": 0.6882705688476562,
+   "voxels": 5496,
+   "edge_voxels": 0,
+   "pos": 21984,
+   "neg": 21984
+  },
+  "lumo": {
+   "iso_au": 0.06408028602600098,
+   "psi_max_au": 0.6408028602600098,
+   "voxels": 13760,
+   "edge_voxels": 0,
+   "pos": 6368,
+   "neg": 103712
+  }
+ }
+}

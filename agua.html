@@ -75,7 +75,13 @@
       <div class="seg" id="views" aria-label="Vista molecular">
         <button class="on" data-view="structure">Molécula</button>
         <button data-view="density">Densidad</button>
+        <button data-view="mo">MO</button>
         <button data-view="vibration">Vibración</button>
+      </div>
+      <div class="seg" id="moSel" hidden aria-label="Orbital molecular">
+        <button class="on" data-mo="homo1">HOMO-1</button>
+        <button data-mo="homo">HOMO</button>
+        <button data-mo="lumo">LUMO</button>
       </div>
       <div id="motion">
         <button id="btnVib" class="go">▶ animar</button>
@@ -120,12 +126,13 @@
     <h2>¿Qué muestra la nube?</h2>
     <p id="densityText">La vista <b>Molécula</b> muestra núcleos y enlaces como bolas y varillas: no dibuja electrones individuales.</p>
     <div class="callout"><b>En Densidad:</b> si el cálculo RHF/STO-3G está disponible, los puntos son muestras reales de ρ(r) —la distribución cuántica de los 10 electrones—; si no, caen a un esquema ilustrativo. En ambos casos no son electrones dibujados uno por uno. El oxígeno concentra la densidad (δ−); los hidrógenos quedan parcialmente positivos (δ+).</div>
+    <div class="callout gold"><b>En MO:</b> isosuperficies |ψ|=const de los orbitales moleculares reales (HOMO-1, HOMO, LUMO) calculados con RHF/STO-3G. Azul = fase ψ&gt;0, naranja = ψ&lt;0; el plano nodal separa los lóbulos. El signo es fase cuántica, no carga: un MO desocupado (LUMO) no contiene electrones.</div>
 
     <div class="explain">
       <h2>Un modelo, no una foto</h2>
       <p><b>Enlace covalente:</b> cada O–H comparte densidad electrónica. La molécula tiene 10 electrones en total: 8 del oxígeno y 1 de cada hidrógeno. En esta vista no se asigna una trayectoria a ninguno.</p>
       <p><b>Polaridad:</b> como la forma es angular, las polaridades de los dos enlaces no se cancelan. La molécula tiene un extremo parcialmente negativo (O) y otro parcialmente positivo (entre los H).</p>
-      <p class="note">Geometría de equilibrio experimental aproximada para H₂O gaseosa. La nube y los pares libres son ilustraciones didácticas VSEPR; no son una función de onda molecular calculada. Un cálculo electrónico real requiere orbitales moleculares y correlación electrónica, no solo superponer orbitales atómicos de hidrógeno.</p>
+      <p class="note">Geometría de equilibrio experimental aproximada para H₂O gaseosa. La nube de <b>Densidad</b> es un cálculo RHF/STO-3G real (base mínima, sin correlación); los <b>MO</b> son sus orbitales moleculares isosuperficiados. El esquema VSEPR queda como respaldo si los datos no cargan.</p>
     </div>
   </aside>
 </main>

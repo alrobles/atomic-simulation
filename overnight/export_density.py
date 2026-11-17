@@ -20,7 +20,8 @@ os.makedirs(OUT, exist_ok=True)
 NPTS = 50000
 rho = np.load(RHO)                      # (200,200,200) e/bohr³, ejes x,y,z
 n = rho.shape[0]
-lim = 6.0
+lim = 6.0                               # BOHR (eval_gto trabaja en atómicas)
+BOHR2A = 0.529177210903                  # bohr → Å para agua.js
 
 # Pesos ∝ ρ (dV constante se cancela). Muestreo sistemático sobre la CDF.
 w = rho.astype(np.float64).ravel()
@@ -43,7 +44,8 @@ py = xs[iy] + jy * dh
 pz = xs[iz] + jz * dh
 
 # Conversión de ejes al sistema de agua.js: molécula en el plano xy, H hacia -y.
-ax, ay, az = pz, -px, py
+# px,py,pz están en bohr → pasar a Å antes de exportar.
+ax, ay, az = pz * BOHR2A, -px * BOHR2A, py * BOHR2A
 
 # Peso visual: densidad local normalizada por percentil alto + raíz (comprime rango).
 wv = w[idx]

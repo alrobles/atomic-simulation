@@ -42,6 +42,10 @@ let view = "structure", vibMode = "symmetric", playing = false, spinning = true;
 let angleDeg = ANGLE_DEG, yaw = -0.38, pitch = 0.2, zoom = 1;
 let drag = null, lastTime = performance.now(), animTime = 0;
 let W = 0, H = 0;
+// Orbitales moleculares: isosuperficies |ψ|=iso muestreadas (data/mo_*.bin).
+const MO_IDX = { homo1: 3, homo: 4, lumo: 5 };
+const MO_LABEL = { homo1: "MO 3 · HOMO-1", homo: "MO 4 · HOMO", lumo: "MO 5 · LUMO" };
+let moOrb = "homo", moClouds = {}, moEnergies = null;
 
 // Fija la nube aleatoria para que no parpadee entre fotogramas.
 let seed = 73421;
@@ -61,6 +65,18 @@ fetch("data/h2o_density.bin").then(r => r.ok ? r.arrayBuffer() : Promise.reject(
   .catch(() => {});
 fetch("data/h2o_info.json").then(r => r.ok ? r.json() : Promise.reject(r.status))
   .then(j => { hfInfo = j; })
+  .catch(() => {});
+// Isosuperficies MO: carga perezosa por orbital; energías desde data.json del HF.
+function ensureMo(tag) {
+  if (moClouds[tag]) return Promise.resolve(moClouds[tag]);
+  const load = f => fetch("data/" + f).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+    .then(b => new Float32Array(b));
+  return Promise.all([load(`mo_${tag}_pos.bin`), load(`mo_${tag}_neg.bin`)])
+    .then(([pos, neg]) => (moClouds[tag] = { pos, neg }))
+    .catch(() => null);
+}
+fetch("overnight/h2o/data.json").then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(j => { moEnergies = j.mo_energies_ev; })
   .catch(() => {});
 for (let i = 0; i < 600; i++) {
   densitySamples.core.push({ x: normal() * 0.14, y: normal() * 0.14, z: normal() * 0.14 });
@@ -182,6 +198,31 @@ function drawDensity(g, angle) {
   ctx.globalAlpha = 1;
 }
 
+// Isosuperficie |ψ|=iso de un MO real (RHF/STO-3G): puntos muestreados en la
+// envolvente, azul ψ>0 / naranja ψ<0 — misma convención de fase del sitio.
+function drawMo() {
+  const d = moClouds[moOrb];
+  if (!d) return;
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const base = Math.min(W, H) * 0.43 * zoom;
+  const cx = W / 2, cy0 = H * 0.52;
+  const shell = (arr, color, alpha, size) => {
+    ctx.globalAlpha = alpha; ctx.fillStyle = color;
+    const n = arr.length;
+    for (let i = 0; i < n; i += 3) {
+      const x = arr[i], y = arr[i + 1], z = arr[i + 2];
+      const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+      const y1 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+      const scale = base / (1 + z2 * 0.13);
+      ctx.fillRect(cx + x1 * scale, cy0 - y1 * scale, size, size);
+    }
+  };
+  shell(d.pos, "#4dabf7", 0.5, 1.55);   // ψ > 0
+  shell(d.neg, "#ff922b", 0.5, 1.55);   // ψ < 0
+  ctx.globalAlpha = 1;
+}
+
 function drawBond(a, b) {
   const p = project(a), q = project(b);
   ctx.save();
@@ -247,39 +288,49 @@ function drawLabels(g) {
 
 function updateText(angle) {
   const real = view === "density" && realDensity;
+  const mo = view === "mo";
   const nPts = real ? realDensity.length / 4 : DENSITY_POINTS;
   const labels = {
     structure: ["Molécula", "Modelo de bolas y varillas: O rojo, H claro; los núcleos forman un ángulo de 104.5°."],
     density: [real ? "Densidad electrónica · RHF/STO-3G" : "Densidad electrónica (esquema)",
       real ? "Puntos muestreados de ρ(r) calculada con Hartree-Fock/STO-3G (PySCF) en la geometría de equilibrio; no son electrones individuales. El tamaño del punto crece con la densidad local."
            : "Puntos = muestras ilustrativas de densidad en enlaces y pares libres; no son electrones individuales ni un cálculo molecular exacto."],
+    mo: ["Orbital molecular · RHF/STO-3G",
+      "Isosuperficie |ψ|=const muestreada como puntos: azul ψ>0, naranja ψ<0. El plano nodal separa los lóbulos de fase opuesta."],
     vibration: ["Vibración molecular", vibMode === "bend" ? "Flexión: cambia el ángulo H–O–H; la animación está ralentizada para verla." : vibMode === "asymmetric" ? "Estiramiento asimétrico: un enlace O–H se alarga mientras el otro se acorta." : "Estiramiento simétrico: ambos enlaces O–H se alargan y acortan juntos."],
   };
   $("sceneLabel").innerHTML = `<b>${labels[view][0]}</b> · ${labels[view][1]}`;
   const hf = real && hfInfo
     ? ` · E_HF ${hfInfo.E_hartree.toFixed(2)} Ha · μ ${hfInfo.dipole_debye.toFixed(2)} D · q(O) ${hfInfo.mulliken_charges.O.toFixed(2)}e`
     : "";
-  $("modeInfo").textContent = `Ángulo actual: ${angle.toFixed(1)}° · longitud O–H: ${BOND_ANGSTROM.toFixed(4)} Å · momento dipolar: ${DIPOLE_DEBYE} D` +
-    (view === "density" ? ` · ${Math.round(nPts).toLocaleString("es")} muestras${hf}` : "");
-  $("densityText").innerHTML = view === "density"
+  const moE = mo && moEnergies ? ` · ε = ${moEnergies[MO_IDX[moOrb]].toFixed(1)} eV` : "";
+  $("modeInfo").textContent = mo
+    ? `${MO_LABEL[moOrb]}${moE} · isosuperficie |ψ|=iso · fase + azul / − naranja · RHF/STO-3G`
+    : `Ángulo actual: ${angle.toFixed(1)}° · longitud O–H: ${BOND_ANGSTROM.toFixed(4)} Å · momento dipolar: ${DIPOLE_DEBYE} D` +
+      (view === "density" ? ` · ${Math.round(nPts).toLocaleString("es")} muestras${hf}` : "");
+  $("densityText").innerHTML = mo
+    ? "Los puntos muestrean la <b>envolvente isosuperficial</b> del orbital molecular real (|ψ|=const, RHF/STO-3G): cada punto es una posición sobre la superficie, no un electrón. Azul/naranja distinguen el signo de ψ — fase cuántica, no carga eléctrica. El LUMO es virtual: no contiene electrones en el estado fundamental."
+    : view === "density"
     ? (real
-      ? "Los puntos son <b>muestras de la densidad electrónica real</b> (HF/STO-3G, base mínima): la distribución cuántica de los 10 electrones en el estado fundamental. No son electrones individuales ni un cálculo con correlación." 
+      ? "Los puntos son <b>muestras de la densidad electrónica real</b> (HF/STO-3G, base mínima): la distribución cuántica de los 10 electrones en el estado fundamental. No son electrones individuales ni un cálculo con correlación."
       : "Los puntos son <b>muestras</b> de un esquema de densidad electrónica, no electrones individuales.")
     : "La vista <b>Molécula</b> muestra núcleos y enlaces como bolas y varillas: no dibuja electrones individuales.";
-  $("angleControl").hidden = view === "vibration" || real;
+  $("angleControl").hidden = view === "vibration" || real || mo;
   $("vibControls").hidden = view !== "vibration";
+  $("moSel").hidden = !mo;
 }
 
 function draw(now) {
   if (!fit()) return;
   drawBackground();
   if (spinning && !drag) yaw += 0.0018;
-  // Con densidad real, la geometría es la de equilibrio HF (el ángulo editable no aplica).
-  const real = view === "density" && realDensity;
-  const { g, angle } = real
+  // Con densidad real o MOs, la geometría es la de equilibrio HF (el ángulo editable no aplica).
+  const fixed = (view === "density" && realDensity) || view === "mo";
+  const { g, angle } = fixed
     ? { g: waterGeometry(ANGLE_DEG, BOND_ANGSTROM), angle: ANGLE_DEG }
     : animatedGeometry();
   if (view === "density") drawDensity(g, angle);
+  if (view === "mo") drawMo();
   // Bonds are behind the atomic spheres.
   drawBond(g.O, g.H1); drawBond(g.O, g.H2);
   drawAngle(g, angle);
@@ -296,6 +347,7 @@ function draw(now) {
 function setView(next) {
   view = next;
   document.querySelectorAll("#views button").forEach(b => b.classList.toggle("on", b.dataset.view === view));
+  if (view === "mo") ensureMo(moOrb);
   if (view === "vibration") {
     $("btnVib").disabled = false;
   } else {
@@ -323,6 +375,11 @@ canvas.addEventListener("wheel", e => {
 }, { passive: false });
 
 document.querySelectorAll("#views button").forEach(b => b.onclick = () => setView(b.dataset.view));
+document.querySelectorAll("#moSel button").forEach(b => b.onclick = () => {
+  moOrb = b.dataset.mo;
+  document.querySelectorAll("#moSel button").forEach(x => x.classList.toggle("on", x === b));
+  ensureMo(moOrb);
+});
 document.querySelectorAll("#vibModes button").forEach(b => b.onclick = () => {
   vibMode = b.dataset.mode;
   document.querySelectorAll("#vibModes button").forEach(x => x.classList.toggle("on", x === b));

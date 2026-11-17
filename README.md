@@ -13,7 +13,7 @@ Once visualizaciones interactivas (HTML + JavaScript, sin dependencias ni build)
 | [`espectro.html`](espectro.html) | **Espectro de emisión**: líneas espectrales reales del átomo neutro (NIST ASD, 250–1050 nm) sobre el arcoíris del visible, diagrama de niveles tipo Grotrian agrupado por tipo de orbital, y **simulación de excitación/emisión**: se excita un electrón externo y se anima la cascada de fotones emitidos (ΔE = hc/λ). Pestañas He…Og; Og no tiene datos (átomo de vida ~1 ms, espectro solo predicho). |
 | [`fusion.html`](fusion.html) | **Fusión nuclear (cadena pp)**: plasma 2D del núcleo solar con p⁺, d, ³He y ⁴He. Las reacciones `p+p→d`, `d+p→³He` y `³He+³He→⁴He` ocurren con probabilidades ∝ exp(−τ·T^−⅓) (ventana de Gamow, cualitativa). Control de temperatura (0.3–5 keV ≈ 3–58 MK), contadores de ⁴He y energía liberada, equivalencia E=mc² y registro de eventos. |
 | [`estrella.html`](estrella.html) | **Ciclo de vida estelar**: slider de masa inicial (0.5–30 M☉) que determina el destino. La estrella evoluciona por fases (secuencia principal → gigante → quemado de He → destino) dibujando su trayectoria en el **diagrama H–R** en vivo: color y tamaño reales por T y R. Enanas marrones, enanas blancas, estrellas de neutrones y agujeros negros. |
-| [`agua.html`](agua.html) | **Molécula de agua**: modelo 3D interactivo con geometría angular (104.5°), enlaces O–H, cargas parciales, dipolo y control para explorar el ángulo. Vista de **densidad electrónica real** (50,000 muestras de ρ(r) calculada con Hartree-Fock/STO-3G en PySCF, `data/h2o_density.bin`; si falta el archivo, cae a un esquema ilustrativo) y animación de los tres modos normales de vibración. |
+| [`agua.html`](agua.html) | **Molécula de agua**: modelo 3D interactivo con geometría angular (104.5°), enlaces O–H, cargas parciales, dipolo y control para explorar el ángulo. Vista de **densidad electrónica real** (50,000 muestras de ρ(r) calculada con Hartree-Fock/STO-3G en PySCF, `data/h2o_density.bin`; si falta el archivo, cae a un esquema ilustrativo), vista de **orbitales moleculares** con isosuperficies \|ψ\|=const de HOMO-1/HOMO/LUMO (`data/mo_*.bin`, fases azul/naranja) y animación de los tres modos normales de vibración. |
 | [`estados-agua.html`](estados-agua.html) | **Agua en varios estados**: dinámica molecular 2D cualitativa de moléculas rígidas H₂O con recuento adaptativo (54–180) y preajustes de sólido, líquido y gas. Interacciones efectivas de corto alcance y puentes de hidrógeno orientacionales; las fases arrancan desde **snapshots equilibrados offline** (400k pasos, `overnight/md/`) y una gráfica muestra la respuesta del modelo a T* (`overnight/md/sweep.json`). |
 | [`superposicion.html`](superposicion.html) | **Superposición temporal Ψ(r⃗, t)**: un estado puro es estacionario y no irradia; durante una transición el electrón está en superposición y el término cruzado hace oscilar la nube a la frecuencia de Bohr ω = (E₂−E₁)/ℏ. Corte de la densidad en el plano xz con presets (Lyman α, Balmer, monopolar 1s↔2s), control de mezcla y la flecha del dipolo ⟨z⟩(t). |
 | [`quimica.html`](quimica.html) | **Hibridación y enlace (LCAO-MO)**: esquema interactivo de hibridación sp, sp², sp³, sp³d y sp³d² con sus lóbulos direccionales, y orbitales moleculares σ₁ₛ / σ₁ₛ* de H₂⁺ frente a la distancia internuclear R, con la curva de energía y el mínimo de equilibrio. |
@@ -63,7 +63,7 @@ superposicion.html  superposición temporal Ψ(r,t) — el dipolo que emite
 fusion.html       cadena pp — plasma, fusiones y balance E=mc²
 estrella.html     ciclo de vida estelar — H–R + destinos por masa
 quimica.html      hibridación (sp…sp³d²) y enlace LCAO-MO
-agua.html         molécula de agua — geometría, densidad cualitativa y vibraciones
+agua.html         molécula de agua — geometría, densidad RHF y orbitales MO
 estados-agua.html H₂O en 2D — interacciones, puentes H, estados y temperatura
 dirac.html        de Thomson a Dirac — historia + simulador de 2 partículas
 css/style.css     estilos de orbitales, orbitales_all, quimica, superposicion y dirac
@@ -74,7 +74,9 @@ js/app.js         lógica de la interfaz de orbitales.html
 js/app_all.js     lógica de la interfaz de orbitales_all.html
 js/specdata.js    líneas espectrales NIST por gas noble
 data/             artefactos precalculados: h2o_density.bin (ρ RHF/STO-3G),
-                  h2o_info.json y clouds/ (nubes de átomos uint16)
+                  h2o_info.json, mo_{homo1,homo,lumo}_{pos,neg}.bin
+                  (isosuperficies MO, coordenadas en Å) y clouds/ (nubes de
+                  átomos uint16)
 overnight/         scripts de cómputo local que regeneran los artefactos
 js/espectro.js    espectro, diagrama de niveles y cascada de emisión
                     (funciones puras exportadas para pruebas en Node)
