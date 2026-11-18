@@ -87,6 +87,10 @@ h2 { font-size: 17px; margin: 4px 0 8px; }
 .explain { margin-top: 14px; font-size: 14px; line-height: 1.5; color: #c9d1d9; }
 .explain b { color: #fff; }
 .note { font-size: 12px; color: #8b949e; }
+.og-banner { background: #161b22; border: 1px solid #f0c00066; border-radius: 8px; padding: 8px 10px; margin: 0 0 10px; font-size: 12.5px; }
+.og-banner a { color: #f0c000; font-weight: 600; text-decoration: none; }
+.og-banner a:hover { text-decoration: underline; }
+.mini:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; border-radius: 6px; }
 
 @media (max-width: 900px) {
   main { grid-template-columns: 1fr; grid-template-rows: 65vh auto; }

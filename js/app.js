@@ -237,20 +237,28 @@
     let h = `<h2>Periodo ${k + 1}: lo que agrega ${g.sym}</h2>
       <div class="formula">${subs.map((s) => `${s.lab}<sub>(${s.cap})</sub>`).join(" + ")} = ${subs.map((s) => s.cap).join(" + ")} = <b>${add}</b> electrones<br>
       ${prev ? `${prev.Z} (${prev.sym}) + ${add} = <b>${g.Z} (${g.sym})</b>` : `<b>2 (He)</b>: la primera capa solo tiene un orbital`}</div>`;
+    if (g.sym === "Og") {
+      h += `<div class="og-banner">
+        ⚛ <b>Elemento sintético (semivida T½ ~0.7 ms):</b> no existe en la naturaleza; se fabrica bombardeando ²⁴⁹Cf con ⁴⁸Ca en un ciclotrón.
+        <a href="colisionador.html#Og"> Simular su síntesis en el colisionador →</a>
+      </div>`;
+    }
     subs.forEach((s) => {
       h += `<div class="sub" style="border-color:${A.LCOLOR[s.l]}"><h3>${s.lab} <span>· ${s.norb} orbital${s.norb > 1 ? "es" : ""} × 2 e⁻ = ${s.cap} electrones</span></h3><div class="gallery">`;
       for (let i = 0; i < s.norb; i++)
-        h += `<div class="mini" data-n="${s.n}" data-l="${s.l}" data-i="${i}"><canvas></canvas>${s.n}${A.ANGNAME[s.l][i]}</div>`;
+        h += `<div class="mini" role="button" tabindex="0" aria-label="Ver orbital ${s.n}${A.ANGNAME[s.l][i]}" data-n="${s.n}" data-l="${s.l}" data-i="${i}"><canvas></canvas>${s.n}${A.ANGNAME[s.l][i]}</div>`;
       h += `</div></div>`;
     });
     $("newcard").innerHTML = h;
     document.querySelectorAll(".mini").forEach((m) => {
       const v = new Viewer(m.querySelector("canvas"), { interactive: false, axes: false, fill: 0.42, spin: 0.006, pointSize: 1.3 });
       v.setCloud(A.genOrbital(+m.dataset.n, +m.dataset.l, +m.dataset.i, 3500));
-      m.addEventListener("click", () => {
+      const openOrb = () => {
         state.orbital = { n: +m.dataset.n, l: +m.dataset.l, i: +m.dataset.i };
         renderMain();
-      });
+      };
+      m.addEventListener("click", openOrb);
+      m.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openOrb(); } });
     });
   }
 
@@ -281,9 +289,14 @@
     renderTabs(); renderLayers(); renderGallery(); renderPattern(); renderMain();
   }
   document.addEventListener("keydown", (e) => {
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA")) return;
     if (e.key === "ArrowRight") selectNoble(state.k + 1);
     if (e.key === "ArrowLeft") selectNoble(state.k - 1);
   });
+
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    Viewer.paused = true;
+  }
 
   const fromHash = A.NOBLES.findIndex((g) => "#" + g.sym === location.hash);
   selectNoble(fromHash >= 0 ? fromHash : 0);

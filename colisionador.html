@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Simulador interactivo de colisiones de iones pesados y síntesis de elementos superpesados hasta el oganesón (Z=118) y Z=120: potencial de Bass, cuasifisión, evaporación xn en picobarns y cadenas de desintegración α.">
+<title>Colisionador de elementos artificiales — fusión de iones pesados hasta Og (Z=118) y Z=120</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { overflow: hidden; }
+  main { grid-template-columns: minmax(0, 1.45fr) minmax(360px, 430px); }
+  #stage { display: flex; flex-direction: column; min-height: 0; }
+  #toolbar { gap: 6px 10px; }
+  #toolbar button.go { background: #1f6feb; border-color: #1f6feb; color: #fff; font-weight: 600; }
+  #toolbar button.go:hover { background: #388bfd; }
+  #toolbar button.gold { background: #d29922; border-color: #d29922; color: #000; font-weight: 600; }
+  #toolbar button.gold:hover { background: #f0c000; }
+  #toolbar button.on { background: #238636; border-color: #3fb950; color: #fff; font-weight: 600; }
+  .spd { padding: 3px 8px; font-size: 12px; }
+  .spd.on { background: #f0c000 !important; color: #000 !important; border-color: #f0c000 !important; }
+
+  #chamberWrap { position: relative; flex: 1.25; min-height: 220px; border-bottom: 1px solid #30363d; }
+  #chamber { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #chamberInfo { position: absolute; left: 12px; top: 8px; font-size: 11.5px; color: #8b949e; pointer-events: none; text-shadow: 0 1px 3px #000; font-family: ui-monospace, monospace; }
+  #chamberLegend { position: absolute; right: 64px; bottom: 8px; display: flex; gap: 10px; font-size: 10.5px; color: #8b949e; pointer-events: none; text-shadow: 0 1px 3px #000; }
+  #chamberLegend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+
+  #charts { flex: 0.92; min-height: 170px; display: grid; grid-template-columns: 1fr 1.15fr 1.05fr; gap: 1px; background: #21262d; }
+  .chartBox { position: relative; background: #0d1117; min-height: 0; }
+  .chartBox canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #excCanvas { cursor: ew-resize; touch-action: none; }
+  #excCanvas:focus-visible { outline: 2px solid #58a6ff; outline-offset: -2px; }
+
+  #side { font-size: 13.5px; line-height: 1.48; }
+  #side h2 { font-size: 14px; color: #f0c000; margin: 12px 0 6px; letter-spacing: 0.2px; }
+  #side h2:first-child { margin-top: 0; }
+
+  .rxn-card { background: #161b22; border: 1px solid #30363d; border-left: 4px solid #f0c000; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  #rxnEq { font-size: 16px; font-weight: 700; color: #e6edf3; }
+  #rxnEq b { color: #f0c000; }
+  #rxnSub { font-size: 11.5px; color: #58a6ff; margin-top: 3px; }
+  #rxnDesc { font-size: 12px; color: #8b949e; margin: 6px 0 0; }
+
+  #freeBox { background: #161b22; border: 1px solid #388bfd66; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #freeBox label { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: #8b949e; }
+  #freeBox select { padding: 5px 6px; font-size: 12px; width: 100%; }
+
+  .ctl-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
+  .ctl-row label { font-size: 12px; color: #8b949e; min-width: 58px; }
+  .ctl-row input[type=range] { flex: 1; min-width: 110px; accent-color: #f0c000; }
+  .ctl-val { font-family: ui-monospace, monospace; font-size: 12px; color: #e6edf3; min-width: 72px; text-align: right; }
+
+  .kv { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #21262d; font-size: 12.5px; gap: 8px; }
+  .kv span { color: #8b949e; }
+  .kv b { color: #e6edf3; font-family: ui-monospace, monospace; text-align: right; }
+  .kv.hl b { color: #f0c000; }
+
+  .f3 { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+  .f3-row { margin: 5px 0; }
+  .f3-top { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 3px; }
+  .f3-top span { color: #c9d1d9; }
+  .f3-top b { font-family: ui-monospace, monospace; }
+  .f3-track { height: 7px; background: #0d1117; border-radius: 4px; overflow: hidden; border: 1px solid #21262d; }
+  .f3-fill { height: 100%; border-radius: 4px; transition: width 0.2s; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
+  .stat-pill { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 5px 6px; text-align: center; }
+  .stat-pill small { display: block; font-size: 10px; color: #8b949e; }
+  .stat-pill b { font-size: 15px; font-family: ui-monospace, monospace; }
+
+  #detLog { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 8px 10px; max-height: 185px; overflow-y: auto; font-size: 11.5px; }
+  .det-item { padding: 6px 0; border-bottom: 1px dashed #21262d; }
+  .det-item:last-child { border-bottom: 0; }
+  .det-head { color: #f0c000; margin-bottom: 3px; }
+  .det-head span { color: #8b949e; font-size: 11px; }
+  .det-chain { line-height: 1.55; color: #c9d1d9; font-family: ui-monospace, monospace; font-size: 11px; }
+  .cstep { padding: 1px 4px; border-radius: 4px; background: #161b22; border: 1px solid #30363d; display: inline-block; margin: 1px 0; }
+  .cstep i { font-style: normal; color: #8b949e; }
+  .cstep.lit { border-color: #f0c000; background: #f0c00022; color: #fff; }
+  .cstep.sf.lit { border-color: #f85149; background: #f8514925; color: #ffa198; }
+
+  button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+    outline: 2px solid #58a6ff; outline-offset: 2px;
+  }
+
+  @media (max-width: 1060px) {
+    body { overflow: auto; height: auto; }
+    main { grid-template-columns: 1fr; grid-template-rows: auto auto; }
+    #chamberWrap { flex: none; height: 42vh; min-height: 260px; }
+    #charts { flex: none; grid-template-columns: 1fr; height: auto; }
+    .chartBox { height: 185px; }
+    #side { border-left: 0; border-top: 1px solid #30363d; }
+  }
+  @media (max-width: 700px) {
+    #chamberLegend { display: none; }
+  }
+  @media (pointer: coarse) {
+    #toolbar button, .spd { min-height: 36px; padding: 6px 11px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Colisionador de elementos artificiales <span>fusión de iones pesados hasta Oganesón (Z=118) y Z=120</span></h1>
+  <nav id="tabs" aria-label="Reacciones superpesadas"></nav>
+  <p class="alt">
+    <a href="index.html">← portada</a> ·
+    <a href="fusion.html">← fusión solar (cadena pp)</a> ·
+    <a href="orbitales.html#Og">orbitales del Oganesón (Og)</a> ·
+    <a href="orbitales_all.html">tabla periódica (Z=1..118)</a> ·
+    <a href="dirac.html">historia y Dirac</a> ·
+    <a href="estrella.html">vida estelar →</a>
+  </p>
+</header>
+
+<main>
+  <section id="stage">
+    <div id="toolbar">
+      <button id="btnFire" class="go" title="Lanzar un ion con la energía y parámetro de impacto elegidos">🎯 Disparar 1 ion</button>
+      <button id="btnBeam" aria-pressed="false" title="Encender el haz continuo del acelerador hasta sintetizar un átomo artificial">☢ Haz continuo</button>
+      <button id="btnForceER" class="gold" title="Forzar un evento raro de supervivencia (residuo de evaporación + cadena α) para observar la física paso a paso">✨ Forzar evento ER</button>
+      <button id="btnPause" aria-pressed="false">⏸ Pausa</button>
+      <button id="btnReset">↺ Reiniciar</button>
+      <div class="seg" role="group" aria-label="Velocidad de simulación">
+        <span class="seglab">Vel.</span>
+        <button class="spd" data-s="0.5" aria-pressed="false">×0.5</button>
+        <button class="spd on" data-s="1" aria-pressed="true">×1</button>
+        <button class="spd" data-s="2" aria-pressed="false">×2</button>
+      </div>
+    </div>
+
+    <div id="chamberWrap">
+      <canvas id="chamber" role="img" aria-label="Cámara de colisiones 2D de iones pesados con detector de silicio"></canvas>
+      <div id="chamberInfo"></div>
+      <div id="chamberLegend">
+        <span><i style="background:#f85149"></i>protones</span>
+        <span><i style="background:#79c0ff"></i>neutrones</span>
+        <span><i style="background:#f0c000"></i>α / ER</span>
+      </div>
+    </div>
+
+    <div id="charts">
+      <div class="chartBox"><canvas id="potCanvas" role="img" aria-label="Gráfica del potencial efectivo de Bass más Coulomb"></canvas></div>
+      <div class="chartBox"><canvas id="excCanvas" tabindex="0" role="slider" aria-label="Sintonizar energía E_cm sobre la función de excitación en picobarns" aria-valuemin="185" aria-valuemax="235" aria-valuenow="208"></canvas></div>
+      <div class="chartBox"><canvas id="mapCanvas" role="img" aria-label="Carta de nuclidos alrededor de la Isla de Estabilidad"></canvas></div>
+    </div>
+  </section>
+
+  <aside id="side">
+    <div id="freeBox" hidden>
+      <label>Proyectil (haz)
+        <select id="selBeam"></select>
+      </label>
+      <label>Blanco
+        <select id="selTarget"></select>
+      </label>
+    </div>
+
+    <div class="rxn-card">
+      <div id="rxnEq"></div>
+      <div id="rxnSub"></div>
+      <p id="rxnDesc"></p>
+    </div>
+
+    <h2>Sintonización del acelerador</h2>
+    <div class="ctl-row">
+      <label for="ecmSlider">E<sub>cm</sub></label>
+      <input type="range" id="ecmSlider" min="185" max="235" step="0.5" value="205">
+      <span class="ctl-val" id="ecmVal">205.0 MeV</span>
+      <button id="btnTune" title="Sintonizar E_cm al máximo de la curva de excitación">🎯 Pico</button>
+    </div>
+    <div class="ctl-row">
+      <label for="bSlider">Impacto b</label>
+      <input type="range" id="bSlider" min="0" max="10" step="0.2" value="1.4">
+      <span class="ctl-val" id="bVal">1.4 fm</span>
+      <label style="min-width:auto;cursor:pointer"><input type="checkbox" id="chkRandB"> b aleatorio</label>
+    </div>
+
+    <h2 id="f3Head">Las tres barreras: σ<sub>ER</sub> = σ<sub>cap</sub> · P<sub>CN</sub> · W<sub>sur</sub></h2>
+    <div class="f3">
+      <div class="f3-row">
+        <div class="f3-top"><span>1. Captura T<sub>cap</sub> (barrera Bass + Coulomb)</span><b id="valCap" style="color:#58a6ff">—</b></div>
+        <div class="f3-track"><div class="f3-fill" id="barCap" style="background:#58a6ff;width:0%"></div></div>
+      </div>
+      <div class="f3-row">
+        <div class="f3-top"><span>2. Núcleo compuesto P<sub>CN</sub> (vs cuasifisión)</span><b id="valPcn" style="color:#ffa657">—</b></div>
+        <div class="f3-track"><div class="f3-fill" id="barPcn" style="background:#ffa657;width:0%"></div></div>
+      </div>
+      <div class="f3-row">
+        <div class="f3-top"><span>3. Supervivencia W<sub>sur</sub> (evaporar xn sin fisionar)</span><b id="valSur" style="color:#3fb950">—</b></div>
+        <div class="f3-track"><div class="f3-fill" id="barSur" style="background:#3fb950;width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="kv"><span>Energía en laboratorio E<sub>lab</sub></span><b id="kvElab">—</b></div>
+    <div class="kv"><span>Barrera de Bass V<sub>B</sub></span><b id="kvVb">—</b></div>
+    <div class="kv"><span>Balance de masa Q</span><b id="kvQ">—</b></div>
+    <div class="kv"><span>Excitación E* = E<sub>cm</sub> + Q</span><b id="kvEstar">—</b></div>
+    <div class="kv"><span>Barrera de fisión B<sub>f</sub>(E*)</span><b id="kvBf">—</b></div>
+    <div class="kv hl"><span>Sección eficaz σ<sub>ER</sub></span><b id="kvSig">—</b></div>
+    <div class="kv hl"><span>Ritmo real (haz 1 pµA)</span><b id="kvTime">—</b></div>
+
+    <h2>Registro del colisionador</h2>
+    <div class="stats-grid">
+      <div class="stat-pill"><small>Dispersión</small><b id="stRuth" style="color:#8b949e">0</b></div>
+      <div class="stat-pill"><small>Cuasifisión</small><b id="stQF" style="color:#ffa657">0</b></div>
+      <div class="stat-pill"><small>Fisión</small><b id="stFF" style="color:#f85149">0</b></div>
+      <div class="stat-pill"><small>Sintetizados</small><b id="stER" style="color:#f0c000">0</b></div>
+    </div>
+
+    <h2>Detector de Silicio · Cadenas α</h2>
+    <div id="detLog" aria-live="polite"></div>
+
+    <section class="explain">
+      <h2>¿Por qué cuesta meses fabricar un solo átomo de oganesón?</h2>
+      <p><b>1. Fusión endotérmica (Q &lt; 0):</b> a diferencia del Sol, juntar dos núcleos pesados <i>consume</i> energía. Para vencer la enorme repulsión eléctrica (Z₁Z₂ = 1960 en ⁴⁸Ca + ²⁴⁹Cf) hace falta acelerar el proyectil hasta la <b>barrera de Bass</b> (~205 MeV en el centro de masa).</p>
+      <p><b>2. La trampa de la cuasifisión (P<sub>CN</sub>):</b> incluso cuando los dos núcleos se tocan, casi siempre forman un sistema dinuclear que se rompe en dos en ~10⁻²⁰ s antes de fundirse en una esfera. Por eso el <b>⁴⁸Ca</b> (doblemente mágico y muy rico en neutrones) fue revolucionario.</p>
+      <p><b>3. La Isla de Estabilidad (W<sub>sur</sub>):</b> para Z &gt; 106, la barrera de fisión de la gota líquida desaparece; los elementos superpesados existen <b>solo gracias a efectos cuánticos de capa</b> cerca de Z ≈ 114–120 y N = 184. Si subes demasiado E<sub>cm</sub>, el calor E* borra esas capas (como muestra B<sub>f</sub>(E*)) y el núcleo fisiona: la ventana de energía mide apenas ~6 MeV.</p>
+      <p><b>4. La firma experimental:</b> un átomo de ²⁹⁴Og tiene una semivida T½ de solo ~0.7 ms. Nadie lo ve directamente: el separador magnético lo implanta en silicio y se identifica por su <b>cadena correlacionada de desintegraciones α</b> (energía E<sub>α</sub> y T½) hasta la fisión espontánea.</p>
+      <p class="note">Modelo físico: potencial nuclear de proximidad Bass (1980), masas de gota líquida Myers–Swiatecki con correcciones de capa en (82,126), (108,162) y (114.6,184), P<sub>CN</sub> por fisilidad efectiva y evaporación estadística telescópica de Jackson con amortiguamiento térmico de capas (E<sub>d</sub> = 18.5 MeV). En modo «Haz continuo» la tasa visual está acelerada proporcionalmente a σ(E)/σ<sub>pico</sub>; el ritmo real aparece en la tabla. En modo libre las cadenas α usan la sistemática de Viola–Seaborg.</p>
+    </section>
+  </aside>
+</main>
+
+<script src="js/colisionador.js"></script>
+</body>
+</html>

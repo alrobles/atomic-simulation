@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Del átomo a la estrella · simulaciones reales de física y química</title>
-<meta name="description" content="Ocho simuladores en español construidos sobre física de verdad: la ecuación de Schrödinger, 660 líneas de emisión del NIST y la cadena de fusión del Sol. Sin librerías, sin instalar y sin conexión.">
+<meta name="description" content="Doce simuladores en español construidos sobre física de verdad: la ecuación de Schrödinger, 660 líneas de emisión del NIST, fusión solar y colisionador de elementos superpesados. Sin librerías, sin instalar y sin conexión.">
 <meta name="theme-color" content="#05070b">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Del átomo a la estrella">
-<meta property="og:description" content="Ocho simuladores en español con física de verdad: orbitales, espectros, fusión nuclear, estrellas y agua. Sin librerías y sin conexión.">
+<meta property="og:description" content="Doce simuladores en español con física de verdad: orbitales, espectros, fusión nuclear, colisionador de superpesados, estrellas y agua. Sin librerías y sin conexión.">
 <meta property="og:locale" content="es_ES">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2305070b'/%3E%3Ccircle cx='16' cy='16' r='3.2' fill='%23f0c000'/%3E%3Cellipse cx='16' cy='16' rx='11' ry='4.6' fill='none' stroke='%234dabf7' stroke-width='1.6' transform='rotate(-28 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='11' ry='4.6' fill='none' stroke='%234dabf7' stroke-width='1.6' transform='rotate(62 16 16)'/%3E%3C/svg%3E">
 <style>
@@ -506,12 +506,12 @@
       <!-- ACTO 3 -->
       <div class="act">
         <div class="act-rail">
-          <p class="act-head"><span class="act-num">Acto 3</span><span class="act-title">El corazón del Sol</span></p>
-          <p class="act-sub">Cuatro núcleos de hidrógeno se convierten en uno de helio. La masa que falta se vuelve luz.</p>
+          <p class="act-head"><span class="act-num">Acto 3</span><span class="act-title">Del corazón del Sol al ciclotrón</span></p>
+          <p class="act-sub">Fusión en las estrellas (4 p⁺ → ⁴He) y colisiones de iones pesados en la Tierra para forjar elementos artificiales hasta el Oganesón (Z=118).</p>
         </div>
         <div class="cards">
           <a class="card lead" href="fusion.html">
-            <span class="art" aria-hidden="false">
+            <span class="art">
               <svg viewBox="0 0 320 200" role="img" aria-label="Diagrama de la cadena protón-protón: cuatro protones producen helio-4, dos positrones, dos neutrinos y energía">
                 <g stroke="#2b3138" stroke-width="1">
                   <line x1="0" y1="150" x2="320" y2="150"/>
@@ -531,18 +531,50 @@
                   <circle cx="214" cy="132" r="8" fill="#4dabf7" opacity=".55"/>
                   <text x="214" y="176" fill="#e6edf3" font-family="ui-monospace,Menlo,monospace" font-size="12" text-anchor="middle">⁴He</text>
                 </g>
-                <g font-family="ui-monospace,Menlo,monospace" font-size="10.5">
+                <g font-family="ui-monospace,Menlo,monospace" font-size="10">
                   <circle cx="168" cy="72" r="3" fill="#fff"/><text x="176" y="76" fill="#fff">ν ×2</text>
                   <circle cx="236" cy="70" r="3" fill="#ff922b"/><text x="244" y="74" fill="#ff922b">e⁺ ×2</text>
-                  <text x="176" y="98" fill="#f0c000">γ · 26,7 MeV</text>
+                  <text x="208" y="98" fill="#f0c000" font-size="9.2" text-anchor="middle">26,7 MeV (γ + cin.; ν escapan)</text>
                 </g>
               </svg>
               <span class="hint">Fusionarse es raro: el Sol dura</span>
             </span>
             <span class="card-body">
               <span class="card-tag">Núcleo · E = mc²</span>
-              <h3>Fusión nuclear</h3>
-              <p>La cadena protón-protón paso a paso: la barrera que casi nunca se cruza, los <b>26,7 MeV</b> y los neutrinos que escapan sin más.</p>
+              <h3>Fusión nuclear (Sol)</h3>
+              <p>La cadena protón-protón (rama ppI) paso a paso: la ventana de Gamow real, los <b>26,7 MeV</b> y los neutrinos que escapan sin más.</p>
+              <span class="card-go">Abrir <i>→</i></span>
+            </span>
+          </a>
+
+          <a class="card" href="colisionador.html">
+            <span class="art">
+              <svg viewBox="0 0 320 200" role="img" aria-label="Colisión de iones pesados 48Ca más 249Cf formando 294Og más tres neutrones y cadena alfa">
+                <line x1="12" y1="112" x2="290" y2="112" stroke="#2b3138" stroke-dasharray="5 4"/>
+                <circle cx="52" cy="112" r="14" fill="#4dabf7" opacity=".85"/>
+                <text x="52" y="144" fill="#79c0ff" font-family="ui-monospace,Menlo,monospace" font-size="10.5" text-anchor="middle">⁴⁸Ca</text>
+                <path d="M72 112 h40" stroke="#4dabf7" stroke-width="1.6"/>
+                <path d="M116 112 l-8 -4 l0 8 z" fill="#4dabf7"/>
+                <circle cx="152" cy="112" r="28" fill="none" stroke="#f0c000" stroke-width="1.3" stroke-dasharray="4 3" opacity=".6"/>
+                <ellipse cx="152" cy="112" rx="22" ry="17" fill="#ff6b6b" opacity=".82"/>
+                <text x="152" y="156" fill="#e6edf3" font-family="ui-monospace,Menlo,monospace" font-size="10.5" text-anchor="middle">²⁴⁹Cf</text>
+                <g stroke="#79c0ff" stroke-width="1.2">
+                  <line x1="168" y1="95" x2="196" y2="68"/><circle cx="198" cy="66" r="3" fill="#79c0ff"/>
+                  <line x1="172" y1="104" x2="205" y2="85"/><circle cx="207" cy="84" r="3" fill="#79c0ff"/>
+                  <line x1="168" y1="128" x2="196" y2="152"/><circle cx="198" cy="154" r="3" fill="#79c0ff"/>
+                </g>
+                <text x="208" y="66" fill="#79c0ff" font-family="ui-monospace,Menlo,monospace" font-size="10">3n</text>
+                <rect x="262" y="66" width="24" height="92" rx="3" fill="#161b22" stroke="#f0c000" stroke-width="1.4"/>
+                <circle cx="274" cy="112" r="9" fill="#f0c000"/>
+                <text x="274" y="174" fill="#f0c000" font-family="ui-monospace,Menlo,monospace" font-size="10.5" text-anchor="middle">²⁹⁴Og</text>
+                <text x="160" y="34" fill="#9aa4b0" font-family="ui-monospace,Menlo,monospace" font-size="10" text-anchor="middle">σ ≈ 0,5 pb · barrera Bass · cadena α</text>
+              </svg>
+              <span class="hint">Cuasifisión, 3n y la Isla de Estabilidad</span>
+            </span>
+            <span class="card-body">
+              <span class="card-tag">Ciclotrón · Z = 113–120</span>
+              <h3>Colisionador de superpesados</h3>
+              <p>Acelera <b>⁴⁸Ca, ⁷⁰Zn o ⁵⁰Ti</b> sobre actínidos, sintoniza la barrera de Bass en picobarns y atrapa la cadena α del <b>Oganesón (118)</b>.</p>
               <span class="card-go">Abrir <i>→</i></span>
             </span>
           </a>
@@ -744,14 +776,14 @@
     <dl class="evidence">
       <div><dt>Líneas de emisión medidas contra el NIST<span>los siete gases nobles, con su longitud de onda e intensidad reales</span></dt><dd>660</dd></div>
       <div><dt>Margen máximo tolerado por línea<span>si alguna se desvía más, la comprobación falla y el cambio no se publica</span></dt><dd>0,2 %</dd></div>
-      <div><dt>Comprobaciones automáticas de la física<span>de la forma del orbital a los MeV del Sol, en cada cambio</span></dt><dd>126</dd></div>
+      <div><dt>Comprobaciones automáticas de la física<span>de la forma del orbital a los MeV del Sol y el colisionador, en cada cambio</span></dt><dd>167</dd></div>
       <div><dt>Librerías externas<span>HTML, CSS y JavaScript propios: se abre sin conexión, incluso desde un pendrive</span></dt><dd>0</dd></div>
     </dl>
 
     <div class="truth">
       <h3>Y aquí es donde te digo lo que no es</h3>
       <ul>
-        <li>Los elementos pesados llevan una <b>corrección relativista aproximada</b>: el modelo sirve para ver la tendencia, no para medir.</li>
+        <li>Los elementos pesados (Z &gt; 70) en la tabla periódica completa llevan una <b>corrección relativista aproximada</b> (opcional); en gases nobles no se aplica: el modelo sirve para ver la tendencia, no para medir.</li>
         <li>La <b>velocidad de fusión</b> del Sol se calcula de forma cualitativa: enseña por qué el Sol dura, no cuántos fotones salen por segundo.</li>
         <li>La geometría del agua se muestra con el modelo de repulsión de pares (VSEPR), <b>no resolviendo la ecuación de Schrödinger</b> de la molécula.</li>
         <li>Las cargas efectivas usan las <b>reglas de Slater</b>, una aproximación de 1930 que funciona sorprendentemente bien pero sigue siendo una aproximación.</li>

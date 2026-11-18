@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Simulación interactiva de la cadena protón-protón (rama ppI) en el núcleo solar: ventana de Gamow real, tunelamiento cuántico, balance de energía Q = 26.7 MeV y E = mc².">
 <title>Fusión nuclear — del hidrógeno al helio</title>
 <style>
   *{box-sizing:border-box}
@@ -32,8 +33,13 @@
   .rxn .q{font-size:13px;color:#3fb950;font-weight:600}
   .rxn .note{font-size:11.5px;color:#8b949e;margin-top:3px}
   #gamowwrap{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 10px}
-  #gamowwrap .cap{font-size:11px;color:#8b949e;margin-bottom:4px}
-  #gamow{width:100%;height:88px;display:block}
+  #gamowwrap .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:#8b949e;margin-bottom:4px;flex-wrap:wrap}
+  #gamowwrap .gbtn{padding:2px 7px;font-size:11px}
+  #gamowwrap .gbtn.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
+  #gamow{width:100%;height:112px;display:block}
+  .nextlab{background:linear-gradient(135deg,#161b22,#1b1f2c);border:1px solid #388bfd66;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:12.5px}
+  .nextlab a{color:#58a6ff;font-weight:600;text-decoration:none}
+  .nextlab a:hover{text-decoration:underline}
   #side{width:400px;min-width:340px;overflow-y:auto;padding:12px 16px;border-left:1px solid #30363d;font-size:14px;line-height:1.5}
   #side h2{font-size:15px;margin:14px 0 6px;color:#f0c000}
   #side h2:first-child{margin-top:0}
@@ -57,7 +63,9 @@
   .note{color:#8b949e;font-size:12px}
   .explain p{margin:8px 0}
   .explain b{color:#fff}
-  @media (max-width:900px){
+  button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #58a6ff;outline-offset:2px}
+  @media (pointer:coarse){.gbtn,.spd{min-height:34px;padding:5px 10px}}
+  @media (max-width:960px){
     html,body{height:auto}
     body{overflow:auto}
     #stage{flex:none;height:52vh;min-height:260px}
@@ -69,12 +77,12 @@
 <body>
 <header>
   <h1>Fusión nuclear: del hidrógeno al helio <span>¿cómo brilla el Sol?</span></h1>
-  <p class="alt"><a href="index.html">← portada</a> · <a href="llenado.html">llenado electrónico</a> · <a href="orbitales.html">nubes y orbitales</a> · <a href="espectro.html">espectro de emisión</a> · <a href="estrella.html">vida estelar →</a></p>
+  <p class="alt"><a href="index.html">← portada</a> · <a href="llenado.html">llenado electrónico</a> · <a href="orbitales.html">nubes y orbitales</a> · <a href="espectro.html">espectro de emisión</a> · <a href="colisionador.html">colisionador de superpesados (Og 118)</a> · <a href="estrella.html">vida estelar →</a></p>
 </header>
 
 <main>
   <section id="stage">
-    <canvas id="plasma"></canvas>
+    <canvas id="plasma" role="img" aria-label="Simulación 2D del plasma solar con protones, deuterones, helio-3 y helio-4"></canvas>
     <div id="plasmainfo"></div>
     <div id="legend">
       <span><i style="background:#f85149"></i>p⁺</span>
@@ -88,19 +96,27 @@
   <section id="mid">
     <div id="rxns">
       <div class="net"><b>4 p⁺ → ⁴He + 2e⁺ + 2νₑ + γ</b>
-        <div class="sub">Δm = 0.0287 u (0.71 % de la masa) → Q = 26.7 MeV por núcleo de helio forjado · E = Δm·c²</div>
+        <div class="sub">Rama ppI (dominante, ~85 % en el Sol) · Δm = 0.0287 u (0.71 % de la masa) → Q = 26.7 MeV por ⁴He · E = Δm·c²</div>
       </div>
       <div class="rxn" id="rxn-pp"><div class="step">Paso 1 de 3 · el cuello de botella</div>
-        <div class="eq">p⁺ + p⁺ → d + e⁺ + νₑ</div><div class="q">Q ≈ 1.44 MeV</div>
+        <div class="eq">p⁺ + p⁺ → d + e⁺ + νₑ</div><div class="q">Q = 0.42 MeV (+ 1.02 MeV por aniquilación e⁺e⁻ = 1.44 MeV)</div>
         <div class="note">Interacción débil: dos protones deben acercarse <i>y</i> convertir un protón en neutrón. ~10¹⁰ años por protón en el núcleo solar.</div></div>
       <div class="rxn" id="rxn-pd"><div class="step">Paso 2 de 3</div>
         <div class="eq">d + p⁺ → ³He + γ</div><div class="q">Q = 5.49 MeV</div>
         <div class="note">Captura radiativa: el deuterón captura otro protón y emite un fotón γ de 5.5 MeV.</div></div>
-      <div class="rxn" id="rxn-hh"><div class="step">Paso 3 de 3</div>
+      <div class="rxn" id="rxn-hh"><div class="step">Paso 3 de 3 · cierre de la rama ppI</div>
         <div class="eq">³He + ³He → ⁴He + 2p⁺</div><div class="q">Q = 12.86 MeV</div>
-        <div class="note">Dos helio-3 chocan y su nucleosíntesis devuelve 2 protones: el ciclo se retroalimenta.</div></div>
-      <div id="gamowwrap"><div class="cap">Tasa de fusión ∝ exp(−τ·T^−⅓) — la ventana de Gamow (cualitativa). Mueve el control de temperatura:</div>
-        <canvas id="gamow"></canvas></div>
+        <div class="note">Dos helio-3 chocan y esta reacción devuelve 2 protones: el ciclo se retroalimenta (en el Sol compite con la rama ppII vía ⁷Be, ~14 %).</div></div>
+      <div id="gamowwrap">
+        <div class="cap">
+          <span id="gamowCap">Ventana de Gamow real (p+p, E<sub>G</sub> = 493.1 keV): Maxwell-Boltzmann × túnel cuántico</span>
+          <span role="group" aria-label="Modo de gráfica de Gamow">
+            <button class="gbtn on" data-gm="peak" aria-pressed="true">Pico P(E)</button>
+            <button class="gbtn" data-gm="rate" aria-pressed="false">Tasa(T)</button>
+          </span>
+        </div>
+        <canvas id="gamow" role="img" aria-label="Gráfica de la ventana de Gamow y tasa de fusión protón-protón"></canvas>
+      </div>
     </div>
     <aside id="side">
       <div id="starhead">
@@ -112,32 +128,40 @@
       <div class="kv"><span>Tiempo de vida de un p⁺</span><b>~10¹⁰ años</b></div>
 
       <h2>Controles</h2>
-      <div class="ctl"><span class="note">T</span><input type="range" id="temp" min="30" max="500" value="130"><b id="tempVal">1.30 keV</b></div>
+      <div class="ctl"><label for="temp" class="note">T</label><input type="range" id="temp" aria-label="Temperatura del plasma en keV" min="30" max="500" value="130"><b id="tempVal">1.30 keV</b></div>
       <div class="ctl">
-        <button id="btnPause" class="go">⏸ pausa</button>
+        <button id="btnPause" class="go" aria-pressed="false">⏸ pausa</button>
         <button id="btnReset">↺ reiniciar</button>
+        <button id="btnFeed" title="Inyectar 20 protones frescos al plasma">+20 p⁺</button>
         <span class="note">velocidad</span>
-        <button class="spd on" data-s="1">×1</button><button class="spd" data-s="2">×2</button><button class="spd" data-s="4">×4</button>
+        <span role="group" aria-label="Velocidad de simulación">
+          <button class="spd on" data-s="1" aria-pressed="true">×1</button><button class="spd" data-s="2" aria-pressed="false">×2</button><button class="spd" data-s="4" aria-pressed="false">×4</button>
+        </span>
       </div>
 
       <h2>Contadores</h2>
       <div class="kv"><span>⁴He forjados</span><b id="stHe4">0</b></div>
       <div class="kv"><span>p⁺ libres</span><b id="stP">40</b></div>
-      <div class="kv"><span>En plumas (d, ³He)</span><b id="stMid">0</b></div>
+      <div class="kv"><span>Intermedios (d, ³He)</span><b id="stMid">0</b></div>
       <div class="kv"><span>Energía liberada <small class="note">(Q total, incluye los 2νₑ)</small></span><b id="stE">0 MeV</b></div>
       <div class="kv"><span>Materia convertida (E=mc²)</span><b id="stKg">0 kg</b></div>
       <div class="kv"><span>Tasa media</span><b id="stRate">0 MeV/s</b></div>
       <p class="note">El contador suma el Q completo de cada reacción, <b>incluida</b> la energía que se llevan los neutrinos (~0.5 MeV de los 26.7 por ⁴He, un 2 %): así cuadra con el Δm·c² de la línea de arriba. Lo que calienta el plasma es el resto (~26.2 MeV).</p>
 
       <h2>Registro de fusiones</h2>
-      <div id="log"><div class="note">Las reacciones aparecerán aquí…</div></div>
+      <div id="log" aria-live="polite"><div class="note">Las reacciones aparecerán aquí…</div></div>
 
       <div class="explain">
         <h2>La física</h2>
         <p><b>1. La barrera:</b> dos protones se repelen por carga eléctrica. Solo los más energéticos del plasma (cola de Maxwell-Boltzmann) se acercan lo bastante para que el <b>tunelamiento cuántico</b> los fusione — por eso hace falta T ~ 10⁷ K.</p>
         <p><b>2. El paso débil:</b> p+p→d exige convertir un protón en neutrón vía interacción débil (emite νₑ, que escapa sin interactuar). Es el paso más improbable: un protón típico del Sol tarda ~10¹⁰ años en fusionarse, pero hay ~10⁵⁷ protones.</p>
         <p><b>3. La cuenta de energía:</b> cada 4 protones liberan 26.7 MeV. El Sol quema ~4 millones de toneladas de materia en energía por segundo — así lleva ~4600 millones de años y le queda ~5000 más.</p>
-        <p class="note">Modelo cualitativo: plasma 2D, probabilidades ∝ exp(−τ·T^−⅓) calibradas para visualización (la tasa real depende también de densidad y del factor S nuclear). Los neutrinos y fotones γ se representan simbólicamente; el positrón e⁺ se aniquila con un electrón del plasma (~1.02 MeV extra, ya incluido en Q).</p>
+        <p class="note">Modelo cualitativo (rama ppI): plasma 2D con repulsión coulombiana suave entre núcleos (e⁺ y νₑ se trazan sin interacción coulombiana) y tasas ∝ exp(−τ·T^−⅓) calibradas para visualización; la gráfica del pico de Gamow P(E) usa la energía de Gamow real p+p (E<sub>G</sub> = 493.1 keV). El positrón e⁺ se aniquila con un electrón del plasma (~1.02 MeV extra, incluido en Q).</p>
+        <div class="nextlab">
+          <b>¿Y los elementos más allá del uranio?</b><br>
+          En las estrellas la fusión frena en el hierro. Para sintetizar elementos artificiales como el <b>oganesón (Z=118)</b> hace falta un acelerador de iones pesados.<br>
+          <a href="colisionador.html">Abrir el colisionador de elementos superpesados →</a>
+        </div>
       </div>
     </aside>
   </section>

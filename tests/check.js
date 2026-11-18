@@ -303,6 +303,23 @@ console.log("\n── 9. Cadena pp: energía y masa ──");
   ok(bottleneck, "p+p es el paso más lento en todo el rango (el cuello de botella que describe la página)");
   const r = F.fusionRate(F.REACTIONS.pp, 1.3);
   ok(r > 1e-3 && r < 1, `tasa p+p a 1.3 keV = ${r.toFixed(4)} s⁻¹ mientras dos iones están en contacto`);
+  // Regresión de bugs en fusion.js: probabilidad creciente con T, pico de Gamow real y conservación de momento
+  const pLo = F.fusionProb(F.REACTIONS.pp, 0.5, 0.02);
+  const pHi = F.fusionProb(F.REACTIONS.pp, 4.0, 0.02);
+  ok(pLo > 0 && pHi > pLo && pHi < 1,
+    `probabilidad de contacto fusionProb crece con T (${pLo.toExponential(2)} → ${pHi.toExponential(2)})`);
+  ok(near(F.GAMOW_EG_PP, 493.14, 0.5), `energía de Gamow p+p E_G = ${F.GAMOW_EG_PP.toFixed(2)} keV (~493.1 keV)`);
+  const e0 = F.gamowPeakE0(F.GAMOW_EG_PP, 1.3);
+  const dE = F.gamowWidth(F.GAMOW_EG_PP, 1.3);
+  ok(near(e0, 5.93, 0.05) && near(dE, 6.41, 0.08),
+    `pico de Gamow solar a 1.3 keV: E₀ = ${e0.toFixed(2)} keV, Δ = ${dE.toFixed(2)} keV`);
+  const gPeak = F.gamowIntegrand(e0, F.GAMOW_EG_PP, 1.3);
+  const gOff = F.gamowIntegrand(e0 * 2, F.GAMOW_EG_PP, 1.3);
+  ok(near(gPeak.peakNorm, 1, 1e-9) && gOff.peakNorm < gPeak.peakNorm,
+    "integrando de Gamow alcanza máximo normalizado 1.0 exactamente en E₀");
+  const cm = F.combineMomentum(1, 100, -40, 2, -20, 50);
+  ok(near(cm.M * cm.vx, 1 * 100 + 2 * -20, 1e-9) && near(cm.M * cm.vy, 1 * -40 + 2 * 50, 1e-9),
+    "combineMomentum conserva el momento lineal total Px y Py");
 }
 
 console.log("\n── 10. Muestreo angular y recuento de subcapas ──");
@@ -445,6 +462,95 @@ console.log("\n── 17. Historia de modelos y simulador Dirac 2P ──");
   }
   ok(sameSpinDiag < 1e-12 && exchErr < 1e-12,
     "fermiones conservan antisimetría de intercambio Ψ_{ab}(x₁,x₂) = −Ψ_{ba}(x₂,x₁) y cero en diagonal mismo espín");
+}
+
+console.log("\n── 18. Colisionador de elementos artificiales (fusión de iones pesados) ──");
+{
+  const C = require("../js/colisionador.js");
+  const Ca48 = C.BEAMS.find(b => b.id === "Ca48");
+  const Ti50 = C.BEAMS.find(b => b.id === "Ti50");
+  const Zn70 = C.BEAMS.find(b => b.id === "Zn70");
+  const O16  = C.BEAMS.find(b => b.id === "O16");
+  const Pb208 = C.TARGETS.find(t => t.id === "Pb208");
+  const Bi209 = C.TARGETS.find(t => t.id === "Bi209");
+  const Pu242 = C.TARGETS.find(t => t.id === "Pu242");
+  const Cf249 = C.TARGETS.find(t => t.id === "Cf249");
+
+  // Nomenclatura IUPAC conocida y sistemática más allá de Z=118
+  ok(C.elementInfo(118).sym === "Og" && C.elementInfo(120).sym === "Ubn" && C.elementInfo(120).name === "Unbinilio",
+    "elementInfo cubre Z=118 (Og) y sistemática IUPAC Z=120 (Ubn / Unbinilio)");
+
+  // Barrera de Bass (1980) para ⁴⁸Ca + ²⁴⁹Cf y ⁷⁰Zn + ²⁰⁹Bi
+  const barOg = C.findBarrier(Ca48, Cf249, 0);
+  const barNh = C.findBarrier(Zn70, Bi209, 0);
+  ok(near(barOg.Vb, 205, 3) && near(barOg.Rb, 13.4, 0.8),
+    `barrera de Bass ⁴⁸Ca+²⁴⁹Cf: V_B = ${barOg.Vb.toFixed(1)} MeV en R_B = ${barOg.Rb.toFixed(1)} fm`);
+  ok(barNh.Vb > barOg.Vb + 45,
+    `barrera de fusión fría ⁷⁰Zn+²⁰⁹Bi (${barNh.Vb.toFixed(1)} MeV) > ⁴⁸Ca+²⁴⁹Cf (${barOg.Vb.toFixed(1)} MeV)`);
+
+  // Fusión endotérmica (Q < 0) y contraste fusión fría (E* ~ 16 MeV) vs caliente (E* ~ 33 MeV)
+  const qOg = C.reactionQ(Ca48, Cf249);
+  const qNh = C.reactionQ(Zn70, Bi209);
+  const qFl = C.reactionQ(Ca48, Pu242);
+  ok(qOg < -165 && qOg > -180 && near(qFl, -161.5, 3.0),
+    `fusión superpesada endotérmica: Q(Og) = ${qOg.toFixed(1)} MeV, Q(Fl) = ${qFl.toFixed(1)} MeV`);
+  ok((barNh.Vb + qNh) < 20 && (barOg.Vb + qOg) > 28,
+    `fusión fría ⁷⁰Zn+²⁰⁹Bi nace fría (E*=${(barNh.Vb + qNh).toFixed(1)} MeV) vs caliente ⁴⁸Ca+²⁴⁹Cf (E*=${(barOg.Vb + qOg).toFixed(1)} MeV)`);
+
+  // Isla de Estabilidad: sin capas B_f^LD(Og) ≈ 0, pero la corrección de capa crea barrera > 4 MeV
+  ok(C.fissionBarrierLD(118, 297) < 0.05 && -C.shellCorr(118, 179) > 4.0,
+    `²⁹⁷Og tiene B_f^LD = ${C.fissionBarrierLD(118, 297).toFixed(3)} MeV pero barrera de capa = ${(-C.shellCorr(118, 179)).toFixed(2)} MeV (Isla de Estabilidad)`);
+
+  // Curvas de excitación: canales dominantes (3n caliente, 1n fría) y campana que sube y cae
+  const curOg = C.excitationCurve(Ca48, Cf249, 48);
+  const curNh = C.excitationCurve(Zn70, Bi209, 48);
+  const cur120 = C.excitationCurve(Ti50, Cf249, 48);
+  const curTh = C.excitationCurve(O16, Pb208, 40);
+  ok(curOg.peakX === 3 && curOg.peakSig > 0.1 && curOg.peakSig < 15,
+    `⁴⁸Ca+²⁴⁹Cf → Og domina canal 3n (σ_pico = ${curOg.peakSig.toFixed(2)} pb en E_cm = ${curOg.peakE.toFixed(1)} MeV)`);
+  ok(curNh.peakX === 1 && curNh.peakSig > 0.005 && curNh.peakSig < 0.5,
+    `⁷⁰Zn+²⁰⁹Bi → Nh (fría) domina canal 1n (σ_pico = ${curNh.peakSig.toFixed(3)} pb)`);
+  ok(cur120.peakSig < curOg.peakSig && curOg.peakSig < curTh.peakSig && curTh.peakSig > 1e8,
+    `jerarquía de secciones eficaces: Z=120 (${cur120.peakSig.toExponential(1)} pb) < Og (${curOg.peakSig.toFixed(2)} pb) << ¹⁶O+²⁰⁸Pb (${curTh.peakSig.toExponential(1)} pb)`);
+  ok(curOg.pts[0].tot < curOg.peakSig * 0.05 && curOg.pts[curOg.pts.length - 1].tot < curOg.peakSig * 0.25,
+    "función de excitación σ(E_cm) forma ventana estrecha (cae bajo la barrera y a alta E* por amortiguamiento de capas)");
+
+  // Regresión de Jackson telescópico: Σ P_xn ≤ 1 y W_sur ≤ 1 en los 80 pares haz×blanco
+  let maxSumP = 0, maxWsur = 0;
+  for (const b of C.BEAMS) for (const t of C.TARGETS) {
+    const bar = C.findBarrier(b, t, 0);
+    for (const dE of [-6, 0, 12, 24]) {
+      const r = C.crossSections(b, t, Math.max(5, bar.Vb + dE));
+      if (r.WsurBest > maxWsur) maxWsur = r.WsurBest;
+      if (r.Estar > 1) {
+        const Tm = 0.80 * Math.sqrt(r.Estar / ((b.A + t.A) / 12));
+        let sp = 0;
+        for (let x = 1; x <= 6; x++) sp += C.jacksonPxn(r.Estar, x, r.Bns, Tm);
+        if (sp > maxSumP) maxSumP = sp;
+      }
+    }
+  }
+  ok(maxSumP <= 1 + 1e-9 && maxWsur <= 1 + 1e-9,
+    `Jackson telescópico acotado en los 80 pares haz×blanco (max ΣP_xn = ${maxSumP.toFixed(4)}, max W_sur = ${maxWsur.toFixed(4)})`);
+
+  // Integrador RK4 de trayectorias: conservación de energía, rebote sub-barrera y captura frontal sobre barrera
+  const trSub = C.integrateTrajectory(Ca48, Cf249, 175, 4.0);
+  const trCap = C.integrateTrajectory(Ca48, Cf249, 215, 1.0);
+  ok(!trSub.captured && trCap.captured,
+    `RK4 distingue rebote sub-barrera (175 MeV, r_min=${trSub.rMin.toFixed(1)} fm) de captura sobre barrera (215 MeV)`);
+  ok(rel(trSub.Eend, trSub.E0) < 0.005,
+    `RK4 conserva la energía en dispersión de Rutherford (ΔE/E = ${(100 * rel(trSub.Eend, trSub.E0)).toFixed(3)}%)`);
+
+  // Cadenas de desintegración α (real ²⁹⁴Og y Viola-Seaborg en modo libre)
+  const chOg = C.buildDecayChain(118, 294);
+  let alphaCons = chOg.length === 4 && chOg[3].mode === "SF" && chOg[3].Z === 112 && chOg[3].A === 282 && near(chOg[0].Ealpha, 11.65, 1e-6);
+  for (let i = 0; i < 3; i++) {
+    if (chOg[i].mode !== "α" || chOg[i + 1].Z !== chOg[i].Z - 2 || chOg[i + 1].A !== chOg[i].A - 4) alphaCons = false;
+  }
+  ok(alphaCons, "cadena α de ²⁹⁴Og conserva ΔZ=−2, ΔA=−4 paso a paso hasta SF en ²⁸²Cn (Eα₁ = 11.65 MeV)");
+  const chFree = C.buildDecayChain(121, 300);
+  ok(chFree.length >= 2 && chFree[0].Ealpha > 10 && chFree[0].Ealpha < chFree[0].Q && isFinite(chFree[0].hl),
+    `cadena Viola-Seaborg libre para ³⁰⁰Ubu: ${chFree.length} pasos, Eα₁ = ${chFree[0].Ealpha} MeV < Qα₁ = ${chFree[0].Q} MeV`);
 }
 
 console.log(fail ? `\n${fail} prueba(s) fallaron\n` : "\ntodas las pruebas pasaron\n");
