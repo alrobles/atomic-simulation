@@ -2,6 +2,8 @@
 
 Doce visualizaciones interactivas (HTML + JavaScript, sin dependencias ni build) más su portada: sobre la estructura electrónica —**por qué los gases nobles tienen 2, 10, 18, 36, 54, 86 y 118 electrones**, la misma vista abierta a cualquier elemento de la tabla periódica, **cómo emiten luz** y por qué un estado puro no irradia—, sobre el enlace y la materia —hibridación, orbitales moleculares, la molécula de agua y sus fases—, sobre el núcleo (fusión solar y colisionador de elementos superpesados) y las estrellas, y una sobre la historia de los modelos y la ecuación de Dirac.
 
+> **Repositorio hermano (química orgánica):** [molecular-simulation](https://github.com/alrobles/molecular-simulation) ([demo en vivo](https://alrobles.github.io/molecular-simulation/)) continúa la escala desde el enlace covalente hacia reacciones orgánicas, empezando por la combustión del metano en cadena de radicales.
+
 ## Las vistas
 
 | Página | Qué muestra |
